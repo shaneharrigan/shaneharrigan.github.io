@@ -36,7 +36,7 @@ const recentPosts = allPosts.slice(0, 10);
 						<ul class={styles.postsList}>
 							{recentPosts.map((post) => (
 								<li class={styles.postItem}>
-									<a href={`/blog/${post.slug}/`} class={styles.postLink}>
+									<a href={`/blog/${post.id}/`} class={styles.postLink}>
 										<h3 class={styles.postTitle}>{post.data.title}</h3>
 										<p class={styles.postDate}>
 											<FormattedDate date={post.data.pubDate} />

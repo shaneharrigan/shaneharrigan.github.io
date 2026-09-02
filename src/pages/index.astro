@@ -1,0 +1,60 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { getCollection } from 'astro:content';
+import styles from '../styles/home.module.css';
+
+const allPosts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const recentPosts = allPosts.slice(0, 10);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class={styles.container}>
+				<section class={styles.hero}>
+					<h1>Welcome</h1>
+					<p>
+						I write about web development, code, and ideas. Posts are explorations, solutions to problems,
+						and occasional tangential thoughts on building things well.
+					</p>
+				</section>
+
+				{recentPosts.length > 0 && (
+					<section class={styles.latestPosts}>
+						<h2>Latest Posts</h2>
+						<ul class={styles.postsList}>
+							{recentPosts.map((post) => (
+								<li class={styles.postItem}>
+									<a href={`/blog/${post.slug}/`} class={styles.postLink}>
+										<h3 class={styles.postTitle}>{post.data.title}</h3>
+										<p class={styles.postDate}>
+											<FormattedDate date={post.data.pubDate} />
+										</p>
+										{post.data.description && (
+											<p class={styles.postDesc}>{post.data.description}</p>
+										)}
+									</a>
+								</li>
+							))}
+						</ul>
+						{allPosts.length > 10 && (
+							<a href="/blog/" class={styles.viewAll}>View All Posts</a>
+						)}
+					</section>
+				)}
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>

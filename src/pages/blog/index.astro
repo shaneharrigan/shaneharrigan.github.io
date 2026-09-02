@@ -1,0 +1,52 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Header from '../../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import styles from '../../styles/blog.module.css';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title="Blog | {SITE_TITLE}" description={SITE_DESCRIPTION} />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class={styles.container}>
+				<div class={styles.header}>
+					<h1>All Posts</h1>
+					<p>A collection of my thoughts and ideas</p>
+				</div>
+
+				{posts.length > 0 ? (
+					<ul class={styles.postsList}>
+						{posts.map((post) => (
+							<li class={styles.postItem}>
+								<a href={`/blog/${post.id}/`} class={styles.postLink}>
+									<h3 class={styles.postTitle}>{post.data.title}</h3>
+									<p class={styles.postDate}>
+										<FormattedDate date={post.data.pubDate} />
+									</p>
+									{post.data.description && (
+										<p class={styles.postDesc}>{post.data.description}</p>
+									)}
+								</a>
+							</li>
+						))}
+					</ul>
+				) : (
+					<p>No posts yet. Check back soon!</p>
+				)}
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>

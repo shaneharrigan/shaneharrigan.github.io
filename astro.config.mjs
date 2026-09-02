@@ -3,12 +3,16 @@
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig, fontProviders } from 'astro/config';
+import rehypeMermaid from 'rehype-mermaid';
 
 // https://astro.build/config
 export default defineConfig({
 	base: '/',
 	site: 'https://shaneharrigan.github.io',
 	output: 'static',
+	markdown: {
+		rehypePlugins: [[rehypeMermaid, { strategy: 'inline-svg' }]],
+	},
 	integrations: [mdx(), sitemap()],
 	fonts: [
 		{

@@ -2,6 +2,16 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
+const writingPeriod = z
+	.object({
+		start: z.coerce.date(),
+		end: z.coerce.date(),
+	})
+	.refine(({ start, end }) => end >= start, {
+		message: 'The writing period must end on or after its start date',
+		path: ['end'],
+	});
+
 const blog = defineCollection({
 	// Load Markdown and MDX files in the `src/content/blog/` directory.
 	loader: glob({ base: './src/content/blog', pattern: '**/*.{md,mdx}' }),
@@ -12,6 +22,7 @@ const blog = defineCollection({
 			description: z.string(),
 			// Transform string to Date object
 			pubDate: z.coerce.date(),
+			writtenDate: z.union([z.coerce.date(), writingPeriod]).optional(),
 			updatedDate: z.coerce.date().optional(),
 			heroImage: z.optional(image()),
 		}),

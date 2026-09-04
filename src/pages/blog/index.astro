@@ -33,7 +33,7 @@ const posts = (await getCollection('blog')).sort(
 								<a href={`/blog/${post.id}/`} class={styles.postLink}>
 									<h3 class={styles.postTitle}>{post.data.title}</h3>
 									<p class={styles.postDate}>
-										<FormattedDate date={post.data.pubDate} />
+										<FormattedDate date={post.data.writtenDate ?? post.data.pubDate} />
 									</p>
 									{post.data.description && (
 										<p class={styles.postDesc}>{post.data.description}</p>

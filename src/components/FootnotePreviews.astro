@@ -1,0 +1,106 @@
+<script>
+	const footnoteLinks = document.querySelectorAll<HTMLAnchorElement>('a[data-footnote-ref]');
+
+	footnoteLinks.forEach((link, index) => {
+		const targetId = decodeURIComponent(link.hash.slice(1));
+		const footnote = document.getElementById(targetId);
+
+		if (!footnote) return;
+
+		const preview = document.createElement('div');
+		preview.className = 'footnote-preview';
+		preview.id = `footnote-preview-${index + 1}`;
+		preview.setAttribute('role', 'tooltip');
+		preview.setAttribute('aria-hidden', 'true');
+
+		const content = footnote.cloneNode(true) as HTMLElement;
+		content.querySelectorAll('[data-footnote-backref]').forEach((backlink) => backlink.remove());
+		preview.append(...content.childNodes);
+		document.body.append(preview);
+		link.setAttribute('aria-describedby', preview.id);
+
+		const positionPreview = () => {
+			const gap = 10;
+			const pagePadding = 16;
+			const linkBounds = link.getBoundingClientRect();
+			const previewBounds = preview.getBoundingClientRect();
+			const centredLeft = linkBounds.left + linkBounds.width / 2 - previewBounds.width / 2;
+			const left = Math.min(
+				window.innerWidth - previewBounds.width - pagePadding,
+				Math.max(pagePadding, centredLeft),
+			);
+			const below = linkBounds.bottom + gap;
+			const top =
+				below + previewBounds.height <= window.innerHeight - pagePadding
+					? below
+					: linkBounds.top - previewBounds.height - gap;
+
+			preview.style.left = `${left}px`;
+			preview.style.top = `${Math.max(pagePadding, top)}px`;
+		};
+
+		const showPreview = () => {
+			preview.dataset.visible = 'true';
+			preview.setAttribute('aria-hidden', 'false');
+			positionPreview();
+		};
+
+		const hidePreview = () => {
+			delete preview.dataset.visible;
+			preview.setAttribute('aria-hidden', 'true');
+		};
+
+		link.addEventListener('mouseenter', showPreview);
+		link.addEventListener('mouseleave', hidePreview);
+		link.addEventListener('focus', showPreview);
+		link.addEventListener('blur', hidePreview);
+		window.addEventListener('resize', () => {
+			if (preview.dataset.visible) positionPreview();
+		});
+	});
+</script>
+
+<style is:global>
+	.footnote-preview {
+		position: fixed;
+		z-index: 10;
+		width: max-content;
+		max-width: min(22rem, calc(100vw - 2rem));
+		padding: 0.75rem 0.9rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 6px;
+		background: white;
+		box-shadow: 0 8px 24px rgba(var(--black), 14%);
+		color: rgb(var(--gray-dark));
+		font-size: 0.8rem;
+		font-weight: 400;
+		line-height: 1.5;
+		opacity: 0;
+		pointer-events: none;
+		transform: translateY(4px);
+		transition:
+			opacity 120ms ease,
+			transform 120ms ease;
+		visibility: hidden;
+	}
+
+	.footnote-preview[data-visible] {
+		opacity: 1;
+		transform: translateY(0);
+		visibility: visible;
+	}
+
+	.footnote-preview > :first-child {
+		margin-top: 0;
+	}
+
+	.footnote-preview > :last-child {
+		margin-bottom: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.footnote-preview {
+			transition: none;
+		}
+	}
+</style>

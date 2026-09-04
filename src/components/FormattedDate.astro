@@ -1,17 +1,42 @@
 ---
+interface DateRange {
+	start: Date;
+	end: Date;
+}
+
 interface Props {
-	date: Date;
+	date: Date | DateRange;
 }
 
 const { date } = Astro.props;
+
+const formatter = new Intl.DateTimeFormat('en-GB', {
+	year: 'numeric',
+	month: 'short',
+	day: 'numeric',
+});
+
+const dayFormatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric' });
+const monthFormatter = new Intl.DateTimeFormat('en-GB', { month: 'short' });
+const isRange = !(date instanceof Date);
+
+const formatRangeStart = (start: Date, end: Date) => {
+	if (start.getFullYear() !== end.getFullYear()) return formatter.format(start);
+	if (start.getMonth() !== end.getMonth()) {
+		return `${dayFormatter.format(start)} ${monthFormatter.format(start)}`;
+	}
+	return dayFormatter.format(start);
+};
 ---
 
-<time datetime={date.toISOString()}>
-	{
-		date.toLocaleDateString('en-us', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-		})
-	}
-</time>
+{
+	isRange ? (
+		<span class="date-range">
+			<time datetime={date.start.toISOString()}>{formatRangeStart(date.start, date.end)}</time>
+			<span aria-hidden="true">–</span><span class="sr-only"> to </span>
+			<time datetime={date.end.toISOString()}>{formatter.format(date.end)}</time>
+		</span>
+	) : (
+		<time datetime={date.toISOString()}>{formatter.format(date)}</time>
+	)
+}

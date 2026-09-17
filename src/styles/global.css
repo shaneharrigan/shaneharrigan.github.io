@@ -139,3 +139,144 @@ hr {
 	/* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
 	white-space: nowrap;
 }
+
+.vibrant-word {
+	display: inline-block;
+	font-weight: 700;
+	color: #e63946;
+	animation: vibrant-word 600ms steps(2, jump-none) infinite;
+}
+
+.botched-repair {
+	display: inline-block;
+	padding: 0 0.15em;
+	color: #7f1d1d;
+	font-weight: 700;
+	background: #fef3c7;
+	border: 1px dashed #b45309;
+	text-decoration: line-through 2px #dc2626;
+	transform: rotate(-1.5deg);
+	animation: botched-repair 1.8s steps(1, end) infinite;
+}
+
+.virus-word {
+	position: relative;
+	display: inline-block;
+	isolation: isolate;
+	padding: 0 0.25em;
+	color: #173b13;
+	font-weight: 700;
+	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+	background: linear-gradient(165deg, #d9f99d 10%, #84cc16 48%, #4d7c0f 100%);
+	border: 1px solid #4d7c0f;
+	border-radius: 45% 38% 48% 35% / 55% 45% 60% 40%;
+	box-shadow: inset 0 0.18em 0.12em rgba(255, 255, 255, 0.5), 0 0.1em 0 #365314;
+	animation: slime-ooze 2.8s ease-in-out infinite;
+}
+
+.virus-word::before {
+	content: "";
+	position: absolute;
+	top: 0.08em;
+	left: 18%;
+	width: 38%;
+	height: 0.12em;
+	background: rgba(255, 255, 255, 0.7);
+	border-radius: 999px;
+}
+
+.virus-word::after {
+	content: "";
+	position: absolute;
+	z-index: -1;
+	left: 20%;
+	bottom: -0.28em;
+	width: 0.18em;
+	height: 0.38em;
+	background: #65a30d;
+	border-radius: 0 0 999px 999px;
+	box-shadow: 1.8em 0.08em 0 -0.02em #4d7c0f, 3.35em -0.04em 0 -0.04em #84cc16;
+	transform-origin: top;
+	animation: slime-drip 2.8s ease-in-out infinite;
+}
+
+@keyframes vibrant-word {
+	0% {
+		color: #e63946;
+		transform: translate(-1px, 0) rotate(-1deg);
+	}
+	25% {
+		color: #f4a261;
+		transform: translate(1px, -1px) rotate(1deg);
+	}
+	50% {
+		color: #2a9d8f;
+		transform: translate(-1px, 1px) rotate(0deg);
+	}
+	75% {
+		color: #277da1;
+		transform: translate(1px, 0) rotate(-1deg);
+	}
+	100% {
+		color: #9b5de5;
+		transform: translate(0, -1px) rotate(1deg);
+	}
+}
+
+@keyframes botched-repair {
+	0%,
+	90%,
+	100% {
+		transform: translate(0, 0) rotate(-1.5deg);
+	}
+	92% {
+		transform: translate(2px, -1px) rotate(2deg);
+	}
+	95% {
+		transform: translate(-2px, 1px) rotate(-2deg);
+	}
+	98% {
+		transform: translate(1px, 0) rotate(1deg);
+	}
+}
+
+@keyframes slime-ooze {
+	0%,
+	100% {
+		transform: skewX(-1deg) scaleY(1);
+		border-radius: 45% 38% 48% 35% / 55% 45% 60% 40%;
+	}
+	50% {
+		transform: skewX(1deg) scaleY(1.05);
+		border-radius: 38% 48% 35% 45% / 45% 58% 42% 55%;
+	}
+}
+
+@keyframes slime-drip {
+	0%,
+	100% {
+		transform: scaleY(0.75);
+	}
+	50% {
+		transform: scaleY(1.25);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.vibrant-word {
+		animation: none;
+		color: #c026d3;
+	}
+
+	.botched-repair {
+		animation: none;
+	}
+
+	.virus-word {
+		animation: none;
+	}
+
+	.virus-word::after {
+		animation: none;
+	}
+}

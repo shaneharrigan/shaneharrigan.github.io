@@ -1,0 +1,149 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE } from '../consts';
+import styles from '../styles/talks.module.css';
+
+const appearances = [
+	{
+		date: 'July 2021',
+		title: 'ROT-Harris: A Dynamic Approach to Asynchronous Interest Point Detection',
+		event: 'Machine Vision and Applications 2021',
+		kind: 'Best Poster Award',
+		description:
+			'A dynamic, tree-based approach to interest point detection for asynchronous event-camera data.',
+		href: 'https://www.mva-org.jp/archives.BestPosterAward.php',
+		source: 'MVA award archive',
+	},
+	{
+		date: 'July 2021',
+		title: 'An Enhanced Martingale Method for Detecting Seismic Precursors from Swarm Satellite Data',
+		event: 'ESA-NRSCC Dragon Symposium',
+		kind: 'Poster',
+		description:
+			'An anomaly-detection method applied to electromagnetic observations from ESA’s Swarm satellites.',
+		href:
+			'https://pure.ulster.ac.uk/en/publications/an-enhanced-martingale-method-for-detecting-seismic-precursors-fr/',
+		source: 'Ulster research record',
+	},
+	{
+		date: 'July 2021',
+		title: 'Detecting Seismic Anomalies from Satellite and Ground-based Network Data with Multiple Parameters',
+		event: 'ESA-NRSCC Dragon Symposium',
+		kind: 'Co-authored oral presentation',
+		description:
+			'An accepted oral presentation led by Yaxin Bi, with Shane named among the contributing authors.',
+		href:
+			'https://dragon-symp2021.esa.int/2021DragonSymp/index3bcd.html?page=browseSessions&downloads=show&form_date=2021-07-20&mode=table&presentations=show',
+		source: 'Conference programme',
+	},
+	{
+		date: 'January 2021',
+		title: 'Reducing-Over-Time Tree for Event-based Data',
+		event: 'International Conference on Pattern Recognition',
+		kind: 'Conference presentation',
+		description:
+			'A data structure for efficiently filtering and processing the asynchronous output of event cameras.',
+		href: 'https://ailb-web.ing.unimore.it/icpr/media/slides/11057.pdf',
+		source: 'Presentation slides',
+	},
+	{
+		date: 'October 2020',
+		title: 'Post-Stimulus Time-Dependent Event Descriptor',
+		event: 'IEEE International Conference on Image Processing',
+		kind: 'Conference presentation',
+		description:
+			'A time-dependent descriptor designed to preserve useful temporal information in event-camera streams.',
+		href: 'https://resourcecenter.ieee.org/conferences/icip-2020/icip20vid529',
+		source: 'IEEE presentation video',
+	},
+	{
+		date: 'May 2020',
+		title: 'Neural Coding Strategies for Event-Based Vision Data',
+		event: 'IEEE International Conference on Acoustics, Speech and Signal Processing',
+		kind: 'Conference presentation',
+		description:
+			'Phase-of-firing and sparse neural coding schemes for representing event-based vision data.',
+		href: 'https://rc.signalprocessingsociety.org/conferences/icassp-2020/spsicassp20vid0211',
+		source: 'IEEE presentation video',
+	},
+	{
+		date: '2019',
+		title: 'Neuromorphic Event-based Action Recognition',
+		event: 'Irish Machine Vision and Image Processing Conference',
+		kind: 'Conference presentation',
+		description:
+			'Action recognition using space-time descriptors formed directly from neuromorphic event streams.',
+		href: 'https://doi.org/10.21427/sa6d-fd08',
+		source: 'Conference paper',
+	},
+	{
+		date: 'November 2018',
+		title: 'Ulster Three Minute Thesis',
+		event: 'Ulster University',
+		kind: 'Finalist',
+		description:
+			'A three-minute presentation distilling doctoral research in neuromorphic vision processing for a general audience.',
+		href: 'https://orcid.org/0000-0002-1702-2818',
+		source: 'ORCID record',
+	},
+	{
+		date: 'August 2018',
+		title: 'Neuromorphic Event-based Space-Time Template Action Recognition',
+		event: 'Irish Machine Vision and Image Processing Conference',
+		kind: 'Conference presentation',
+		description:
+			'Fine-grained action detection using template matching with event-based vision hardware.',
+		href:
+			'https://pure.ulster.ac.uk/en/publications/neuromorphic-event-based-space-time-template-action-recognition/',
+		source: 'Ulster research record',
+	},
+];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			title={`Talks & Awards | ${SITE_TITLE}`}
+			description="Talks, conference presentations, posters, and awards by Shane Harrigan."
+		/>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class={styles.container}>
+				<header class={styles.intro}>
+					<p class={styles.eyebrow}>Research in public</p>
+					<h1>Talks &amp; Awards</h1>
+					<p>
+						Conference talks, posters, and the occasional attempt to explain several years of
+						research in three minutes.
+					</p>
+				</header>
+
+				<ol class={styles.timeline} aria-label="Talks and awards">
+					{appearances.map((appearance) => (
+						<li class={styles.appearance}>
+							<div class={styles.date}>{appearance.date}</div>
+							<div class={styles.body}>
+								<div class={styles.meta}>
+									<span>{appearance.kind}</span>
+									<span aria-hidden="true">/</span>
+									<span>{appearance.event}</span>
+								</div>
+								<h2>{appearance.title}</h2>
+								<p>{appearance.description}</p>
+								<a href={appearance.href} target="_blank" rel="noopener noreferrer">
+									{appearance.source}<span aria-hidden="true"> -&gt;</span>
+								</a>
+							</div>
+						</li>
+					))}
+				</ol>
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>

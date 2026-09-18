@@ -24,13 +24,19 @@ const today = new Date();
 
 <style>
 	footer {
-		padding: 2rem 1rem;
+		padding: 0;
 		text-align: center;
 		border-top: 1px solid rgb(var(--gray-light));
 	}
 	.footer-content {
-		max-width: 600px;
+		display: flex;
+		width: 720px;
+		max-width: calc(100% - 2em);
+		box-sizing: border-box;
+		flex-direction: column;
+		align-items: center;
 		margin: 0 auto;
+		padding: 2rem 1rem;
 	}
 	footer p {
 		margin: 0 0 1rem 0;

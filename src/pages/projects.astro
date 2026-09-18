@@ -1,0 +1,94 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE } from '../consts';
+import styles from '../styles/projects.module.css';
+
+const projects = [
+	{
+		id: 'tinybatch',
+		name: 'TinyBatch',
+		language: 'Go',
+		tone: 'green',
+		description:
+			'A deliberately small distributed batch scheduler built to expose the machinery behind SLURM: queues, workers, resource matching, retries, and durable state.',
+		details: ['HTTP/JSON', 'SQLite', 'Distributed systems'],
+		href: 'https://github.com/shaneharrigan/tinybatch',
+	},
+	{
+		id: 'lemonrtos',
+		name: 'LemonRTOS',
+		language: 'C',
+		tone: 'yellow',
+		description:
+			'A tiny real-time operating system that grew out of a home maker project: building a reactive PID controller to keep a solar panel tracking the sun.',
+		details: ['PID control', 'Solar tracking', 'Arduino Uno'],
+		href: 'https://github.com/shaneharrigan/LemonRTOS',
+	},
+	{
+		id: 'steam',
+		name: 'steam',
+		language: 'Swift',
+		tone: 'red',
+		description:
+			'API-mocking middleware for Vapor applications, built to define test routes, return controlled responses, and simulate network latency without a live backend.',
+		details: ['Vapor 4', 'Swift Testing', 'Mock APIs'],
+		href: 'https://github.com/shaneharrigan/steam',
+	},
+];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			title={`Projects | ${SITE_TITLE}`}
+			description="Software projects by Shane Harrigan, from embedded systems to distributed infrastructure."
+		/>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class={styles.container}>
+				<header class={styles.intro}>
+					<p class={styles.eyebrow}>Selected work</p>
+					<h1>Projects</h1>
+					<p>
+						Small systems built to answer larger questions. These projects range from scheduling
+						work across machines to scheduling it on a microcontroller.
+					</p>
+				</header>
+
+				<section class={styles.projectList} aria-label="Software projects">
+					{projects.map((project, index) => (
+						<a
+							id={project.id}
+							class={styles.project}
+							href={project.href}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={`View ${project.name} on GitHub`}
+						>
+							<div class={styles.projectNumber} aria-hidden="true">
+								{String(index + 1).padStart(2, '0')}
+							</div>
+							<div class={styles.projectBody}>
+								<div class={styles.projectHeading}>
+									<h2>{project.name}</h2>
+									<span class:list={[styles.language, styles[project.tone]]}>{project.language}</span>
+								</div>
+								<p>{project.description}</p>
+								<ul class={styles.details} aria-label={`${project.name} technologies`}>
+									{project.details.map((detail) => <li>{detail}</li>)}
+								</ul>
+							</div>
+							<span class={styles.projectAction} aria-hidden="true">View source</span>
+						</a>
+					))}
+				</section>
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>

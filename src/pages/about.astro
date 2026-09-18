@@ -3,25 +3,66 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_TITLE } from '../consts';
+import { Image } from 'astro:assets';
+import ShaneInStarTrekUniform from '../assets/shane_star_trek.jpg';
 import styles from '../styles/about.module.css';
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`About | ${SITE_TITLE}`} description="About me" />
+		<BaseHead
+			title={`About | ${SITE_TITLE}`}
+			description="About Shane Harrigan: software engineer, occasional robot mechanic, and incurably curious builder."
+			image={ShaneInStarTrekUniform}
+		/>
 	</head>
 	<body>
 		<Header />
 		<main>
 			<div class={styles.container}>
-				<header class={styles.header}>
-					<h1>About</h1>
+				<header class={styles.intro}>
+					<h1>Hello, I'm Shane.</h1>
+					<p class={styles.lede}>
+						I'm a senior software engineer at Microsoft, where I work on Copilot. I like making
+						things and understanding what is happening beneath the abstraction.
+					</p>
 				</header>
 
-				<div class={styles.content}>
-					<!-- Add your background here. -->
-				</div>
+				<figure class={styles.portrait}>
+					<Image
+						src={ShaneInStarTrekUniform}
+						alt="Shane wearing a blue Star Trek uniform and giving the Vulcan salute"
+						width={900}
+						quality={85}
+					/>
+					<figcaption>Live long and prosper.</figcaption>
+				</figure>
+
+				<section class={styles.bio}>
+					<p>
+						I took a slightly indirect route here. I started contributing to FreeBSD as a
+						teenager, spent a few years in academia researching event-driven architectures and
+						neuromorphic computing, and have since worked with everything from oil and gas
+						systems to defense and satellites.
+					</p>
+					<p>
+						I have a soft spot for astronomy and for using computer science to make sense of space
+						data. Some of my published research lives there. I also enjoy small maker projects,
+						like building a real-time controller to keep a solar panel pointed at the sun.
+					</p>
+					<p>
+						This site is where I write about things I have built, repaired, or become curious
+						enough to investigate properly. The useful mistakes usually make the best stories.
+					</p>
+				</section>
+
+				<nav class={styles.nextLinks} aria-label="Explore more">
+					<a href="/projects/">Explore my projects <span aria-hidden="true">-></span></a>
+					<a href="/talks/">Talks &amp; awards <span aria-hidden="true">-></span></a>
+					<a href="/blog/">Read the writing <span aria-hidden="true">-></span></a>
+					<a href="/contact/">Get in touch <span aria-hidden="true">-></span></a>
+				</nav>
 			</div>
 		</main>
 		<Footer />

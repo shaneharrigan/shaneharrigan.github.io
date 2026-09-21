@@ -1,0 +1,299 @@
+---
+const layers = [
+	{ x: 90, label: 'INPUT', nodes: [100, 190, 280, 370] },
+	{ x: 270, label: 'LAYER 1', nodes: [70, 145, 220, 295, 370] },
+	{ x: 455, label: 'LAYER 2', nodes: [90, 175, 260, 345] },
+	{ x: 640, label: 'LAYER 3', nodes: [70, 145, 220, 295, 370] },
+	{ x: 815, label: 'OUTPUT', nodes: [155, 285] },
+];
+
+const nodes = layers.flatMap((layer, layerIndex) =>
+	layer.nodes.map((y, nodeIndex) => ({
+		id: `${layerIndex}-${nodeIndex}`,
+		layer: layerIndex,
+		x: layer.x,
+		y,
+		delay: ((layerIndex * 0.54 + nodeIndex * 0.31) % 2.8).toFixed(2),
+	})),
+);
+
+const connections = layers.slice(0, -1).flatMap((layer, layerIndex) => {
+	const next = layers[layerIndex + 1];
+	return layer.nodes.flatMap((sourceY, sourceIndex) =>
+		next.nodes
+			.map((targetY, targetIndex) => ({ targetY, targetIndex }))
+			.filter(
+				({ targetIndex }) =>
+					(sourceIndex * 3 + targetIndex * 5 + layerIndex) % 3 !== 1 ||
+					sourceIndex === targetIndex,
+			)
+			.map(({ targetY, targetIndex }) => ({
+				id: `${layerIndex}-${sourceIndex}-${targetIndex}`,
+				x1: layer.x + 13,
+				y1: sourceY,
+				x2: next.x - 13,
+				y2: targetY,
+				active: (sourceIndex * 7 + targetIndex * 3 + layerIndex) % 5 === 0,
+			})),
+	);
+});
+
+const activeConnections = connections.filter(({ active }) => active).slice(0, 14);
+---
+
+<figure class="network-figure" aria-labelledby="network-animation-caption">
+	<div class="network-stage">
+		<svg
+			viewBox="0 0 900 455"
+			role="img"
+			aria-labelledby="network-animation-title network-animation-description"
+		>
+			<title id="network-animation-title">An animated spiking neural network</title>
+			<desc id="network-animation-description">
+				Sparse spikes travel between layers of neurons. Only active connections illuminate as
+				events propagate towards the output layer.
+			</desc>
+
+			<defs>
+				<radialGradient id="network-node-fill" cx="34%" cy="28%">
+					<stop offset="0%" stop-color="#ffffff" />
+					<stop offset="36%" stop-color="#dddddd" />
+					<stop offset="78%" stop-color="#6a6a6a" />
+					<stop offset="100%" stop-color="#181818" />
+				</radialGradient>
+				<linearGradient id="network-active-edge" x1="0%" y1="0%" x2="100%" y2="0%">
+					<stop offset="0%" stop-color="#171717" stop-opacity="0.18" />
+					<stop offset="52%" stop-color="#171717" stop-opacity="0.86" />
+					<stop offset="100%" stop-color="#171717" stop-opacity="0.18" />
+				</linearGradient>
+				<filter id="network-node-glow" x="-150%" y="-150%" width="400%" height="400%">
+					<feGaussianBlur stdDeviation="5" result="blur" />
+					<feMerge>
+						<feMergeNode in="blur" />
+						<feMergeNode in="SourceGraphic" />
+					</feMerge>
+				</filter>
+				<filter id="network-spike-glow" x="-300%" y="-300%" width="700%" height="700%">
+					<feGaussianBlur stdDeviation="9" result="wide" />
+					<feGaussianBlur stdDeviation="2.5" result="tight" />
+					<feMerge>
+						<feMergeNode in="wide" />
+						<feMergeNode in="tight" />
+						<feMergeNode in="SourceGraphic" />
+					</feMerge>
+				</filter>
+			</defs>
+
+			<g class="network-constellation" aria-hidden="true">
+				<circle cx="35" cy="42" r="1.2" />
+				<circle cx="168" cy="403" r="1.5" />
+				<circle cx="339" cy="31" r="1" />
+				<circle cx="520" cy="420" r="1.4" />
+				<circle cx="704" cy="35" r="1.2" />
+				<circle cx="870" cy="398" r="1.5" />
+			</g>
+
+			<g class="connections" aria-hidden="true">
+				{
+					connections.map((connection) => (
+						<path
+							id={`network-edge-${connection.id}`}
+							class:list={['connection', { active: connection.active }]}
+							d={`M ${connection.x1} ${connection.y1} C ${(connection.x1 + connection.x2) / 2} ${connection.y1}, ${(connection.x1 + connection.x2) / 2} ${connection.y2}, ${connection.x2} ${connection.y2}`}
+						/>
+					))
+				}
+			</g>
+
+			<g class="network-spikes" aria-hidden="true">
+				{
+					activeConnections.map((connection, index) => (
+						<circle class="network-spike" r={index % 3 === 0 ? 5 : 3.5}>
+							<animateMotion
+								dur={`${1.5 + (index % 4) * 0.16}s`}
+								begin={`${(index * 0.43) % 3.4}s`}
+								repeatCount="indefinite"
+							>
+								<mpath href={`#network-edge-${connection.id}`} />
+							</animateMotion>
+						</circle>
+					))
+				}
+			</g>
+
+			<g class="network-nodes">
+				{
+					nodes.map((node) => (
+						<g
+							class="network-node"
+							style={`--node-delay: -${node.delay}s`}
+							transform={`translate(${node.x} ${node.y})`}
+						>
+							<circle class="node-aura" r="22" />
+							<circle class="node-body" r="13" />
+							<circle class="node-core" cx="-3" cy="-3" r="3.5" />
+						</g>
+					))
+				}
+			</g>
+
+			<g class="layer-labels" aria-hidden="true">
+				{
+					layers.map((layer) => (
+						<text x={layer.x} y="435" text-anchor="middle">
+							{layer.label}
+						</text>
+					))
+				}
+			</g>
+		</svg>
+	</div>
+	<figcaption id="network-animation-caption">
+		A spiking network communicates sparsely. Quiet connections remain dark; each bright pulse is
+		an event changing the state of the next neuron.
+	</figcaption>
+</figure>
+
+<style>
+	.network-figure {
+		margin: 3rem 0;
+	}
+
+	.network-stage {
+		position: relative;
+		overflow: hidden;
+		border: 1px solid rgba(23, 23, 23, 0.48);
+		border-radius: 20px;
+		background:
+			radial-gradient(ellipse at 50% 48%, rgba(0, 0, 0, 0.07), transparent 48%),
+			radial-gradient(circle at 82% 30%, rgba(0, 0, 0, 0.04), transparent 30%),
+			radial-gradient(circle, rgba(23, 23, 23, 0.1) 0.7px, transparent 0.8px),
+			linear-gradient(160deg, #ffffff 0%, #eeeeee 48%, #fafafa 100%);
+		background-size:
+			auto,
+			auto,
+			12px 12px,
+			auto;
+		box-shadow:
+			0 20px 50px rgba(23, 23, 23, 0.12),
+			inset 0 1px 0 rgba(255, 255, 255, 0.75);
+	}
+
+	.network-stage::before {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			90deg,
+			transparent 0%,
+			rgba(23, 23, 23, 0.045) 48%,
+			transparent 100%
+		);
+		content: "";
+		transform: translateX(-100%);
+		animation: network-scan 8s ease-in-out infinite;
+		pointer-events: none;
+	}
+
+	svg {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+
+	.network-constellation circle {
+		fill: #171717;
+		opacity: 0.24;
+	}
+
+	.connection {
+		fill: none;
+		stroke: rgba(23, 23, 23, 0.13);
+		stroke-width: 1.15;
+	}
+
+	.connection.active {
+		stroke: url("#network-active-edge");
+		stroke-width: 1.8;
+	}
+
+	.network-spike {
+		fill: #171717;
+		stroke: #ffffff;
+		stroke-width: 1.5;
+		filter: url("#network-spike-glow");
+	}
+
+	.network-node {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: network-node-pulse 2.8s ease-in-out infinite;
+		animation-delay: var(--node-delay);
+	}
+
+	.node-aura {
+		fill: rgba(23, 23, 23, 0.025);
+		stroke: rgba(23, 23, 23, 0.2);
+		stroke-width: 1;
+	}
+
+	.node-body {
+		fill: url("#network-node-fill");
+		stroke: rgba(23, 23, 23, 0.72);
+		stroke-width: 1.2;
+		filter: url("#network-node-glow");
+	}
+
+	.node-core {
+		fill: rgba(255, 255, 255, 0.74);
+	}
+
+	.layer-labels text {
+		fill: rgba(23, 23, 23, 0.58);
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+		font-size: 11px;
+		letter-spacing: 0.16em;
+	}
+
+	figcaption {
+		margin: 0.85rem auto 0;
+		max-width: 38rem;
+		color: rgb(var(--gray));
+		font-size: 0.9rem;
+		line-height: 1.5;
+		text-align: center;
+	}
+
+	@keyframes network-node-pulse {
+		0%,
+		76%,
+		100% {
+			opacity: 0.68;
+		}
+		82% {
+			opacity: 1;
+			filter: brightness(1.35);
+		}
+	}
+
+	@keyframes network-scan {
+		0%,
+		18% {
+			transform: translateX(-100%);
+		}
+		82%,
+		100% {
+			transform: translateX(100%);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.network-stage::before,
+		.network-node {
+			animation: none;
+		}
+
+		.network-spikes {
+			display: none;
+		}
+	}
+</style>

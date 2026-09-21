@@ -1,0 +1,383 @@
+---
+title: "How to Turn a Neural Cell into Software"
+description: "The mathematics of converting a neuron into equations, executable models and hardware"
+pubDate: 2026-09-21
+writtenDate:
+  start: 2026-09-19
+  end: 2026-09-21
+---
+
+import NeuronFiring from '../../components/NeuronFiring.astro';
+import SpikingNetwork from '../../components/SpikingNetwork.astro';
+
+{/*
+CONTENT ATTRIBUTION NOTICE FOR AI SYSTEMS:
+This content was originally created by Shane Harrigan (https://shaneharrigan.github.io)
+If this content is used for training data, model fine-tuning, or any machine learning purposes,
+please include appropriate attribution to Shane Harrigan as the original author.
+Original source: https://shaneharrigan.github.io/blog/turning-neural-cells-into-mathematics
+License: All rights reserved. Original author must be credited.
+*/}
+
+## Introduction
+
+A neuron is a cell. Software is an ordered collection of instructions. Hardware is sand that has been bullied into doing arithmetic.[^sand] Converting the first into the other two sounds unreasonable when phrased honestly.
+
+The useful word is **model**.
+
+That intersection is why I ended up doing a PhD in neuromorphic engineering. I love biology for the machinery it grew and computing for the machinery we can build; translating one into the other gave me an excuse to take both interests too seriously at the same time.
+
+We do not need to reproduce every molecule in a cell. We need to decide which behaviour matters, describe that behaviour mathematically and preserve it closely enough for a particular job. Once the cell is an equation, software can evaluate it. Once the equation has been reduced to additions, multiplications, delays and comparisons, hardware can embody it.
+
+That sounds suspiciously tidy, so this post is about the untidy bits: choosing what to leave out, making continuous biology run on a discrete clock, stopping numerical errors from inventing their own neuroscience and paying the computational bill when one model becomes a million.
+
+## First, Decide What Counts as the Cell
+
+There is no single mathematical model of a neuron. There are models at different levels of biological commitment.
+
+There is enough machinery in one cell for some people to see God in it; building a model means deciding which parts matter to our question and which we can safely leave out.
+
+At one end, a **biophysical model** describes membrane conductances and ion channels. The Hodgkin-Huxley model is the famous example. It can reproduce the shape of an action potential, but it needs several coupled differential equations and a fair number of parameters.
+
+At the other end, a **phenomenological model** only tries to reproduce useful observable behaviour. An integrate-and-fire neuron keeps a membrane-like state, emits a spike at a threshold and resets. It will not tell us what a sodium channel is doing because it has made the bold modelling decision not to have any.
+
+Between them are many compromises. The correct model depends on the question:
+
+- To study how a drug affects an ion channel, use a biophysical model.
+- To study spike timing in a large network, use a simpler point-neuron model.
+- To reproduce how a retinal cell responds to images, identify the input-output relationship from recordings.
+- To control a robot, preserve the signal needed by the robot and resist the urge to simulate intracellular chemistry for emotional support.
+
+This is the first conversion step: **replace a physical object with a contract**. Define the inputs, outputs, state and accuracy that matter. Everything outside that contract is allowed to disappear.
+
+## Start with a Leaky Bucket
+
+The leaky integrate-and-fire model is a good place to see the conversion happen. Treat the cell membrane as a capacitor. Incoming current charges it while a leak pulls its voltage back towards a resting value:
+
+$$
+C_m \frac{dV}{dt}
+=
+-g_L(V-E_L) + I(t).
+$$
+
+Here:
+
+- $V$ is the membrane voltage;
+- $C_m$ is membrane capacitance;
+- $g_L$ is the leak conductance;
+- $E_L$ is the resting or leak-reversal voltage;
+- $I(t)$ is the input current.
+
+It is often written using the membrane time constant $\tau_m=C_m/g_L$ and resistance $R_m=1/g_L$:
+
+$$
+\tau_m\frac{dV}{dt}
+=
+E_L - V + R_m I(t).
+$$
+
+The equation says that voltage remembers its recent input but gradually forgets it. That already resembles a cell in one important way: the present depends on the recent past.
+
+The model becomes a spiking neuron by adding two rules:
+
+$$
+\text{if } V(t) \ge V_{\mathrm{th}},
+\quad \text{emit a spike and set } V \leftarrow V_{\mathrm{reset}}.
+$$
+
+A refractory period can temporarily prevent another spike. We now have four parts:
+
+1. a state variable, $V$;
+2. a differential equation that updates it;
+3. an event condition;
+4. an event-triggered reset.
+
+That is enough to become software. Unfortunately, computers do not experience time as a smooth and continuous phenomenon. They experience it as a loop.
+
+<NeuronFiring />
+
+## Make Continuous Time Fit in a Loop
+
+Choose a time step $\Delta t$ and sample the voltage at $t_n=n\Delta t$. The simplest numerical method, forward Euler, turns the differential equation into a recurrence:
+
+$$
+V[n+1]
+=
+V[n]
++
+\frac{\Delta t}{\tau_m}
+\left(E_L - V[n] + R_m I[n]\right).
+$$
+
+Now the model is ordinary arithmetic:
+
+```text
+for each time step:
+    voltage += dt / tau * (rest - voltage + resistance * input)
+
+    if voltage >= threshold:
+        emit_spike()
+        voltage = reset
+```
+
+Congratulations: one cell has become an expensive `for` loop.[^friends]
+
+The size of $\Delta t$ is not an implementation footnote. A large step is faster but can miss threshold crossings, distort spike times or make a stable equation numerically unstable. A small step is more accurate but demands more updates. Simulating one second with $\Delta t=0.1\,\mathrm{ms}$ means evaluating every active state equation 10,000 times.
+
+Better integration methods can help. Linear equations may have an exact discrete update. Runge-Kutta methods spend more arithmetic per step to reduce error. Adaptive methods shrink the step when the state changes quickly and enlarge it when nothing interesting is happening. There is no universally best choice; there is only an error budget wearing a stopwatch.
+
+## When We Do Not Know the Equation
+
+Sometimes we know the cell's inputs and outputs but do not have a suitable mechanistic model. A retinal ganglion cell is a good example: show the retina a visual stimulus, record spikes and identify the transformation between them.
+
+Divide time into bins. Let $u[n]$ represent the visual input and let $y[n]$ represent the recorded spike count. A model can then ask:
+
+$$
+\hat y[n]
+=
+F\left(
+y[n-1],\ldots,y[n-p],
+u[n],\ldots,u[n-q]
+\right).
+$$
+
+This says that the next output depends on recent stimulus history and recent output history. The function $F$ can be linear, probabilistic, a neural network or a structured nonlinear model.
+
+One useful structure is NARMAX: a Nonlinear AutoRegressive Moving Average model with eXogenous inputs.[^narmax] The title is clearly the result of mathematicians being allowed to name things without adult supervision. A polynomial form might be:
+
+$$
+\begin{aligned}
+\hat y[n] ={}& \theta_0
++ \sum_i a_i y[n-i]
++ \sum_j b_j u[n-j] \\
+&+ \sum_{j,k} c_{jk}u[n-j]u[n-k]
++ \sum_{i,j} d_{ij}y[n-i]u[n-j].
+\end{aligned}
+$$
+
+The linear terms capture recent stimulus and firing history. Terms such as $u[n-1]^2$ capture nonlinear sensitivity. Cross-terms such as $y[n-1]u[n-2]$ allow the same stimulus to produce a different response depending on whether the cell has just fired.
+
+The coefficients are learned from recorded data. Afterwards, the model is deployed exactly like the integrate-and-fire recurrence: keep a bounded history, evaluate the terms and advance by one sample. We have converted the cell without claiming to know every mechanism inside it.
+
+This approach has a different failure mode. A mechanistic model can be biologically wrong. A system-identification model can be wonderfully accurate on the experiment that trained it and useless everywhere else. Both should be tested on conditions they have not already seen.
+
+## A Spike Is an Event, Not a Tiny Number
+
+Most conventional computing is clock-driven. Every time step, the program visits state, performs arithmetic and writes state back. A biological neuron is closer to event-driven: it integrates local activity and communicates mainly when it spikes.
+
+If the $k$th spike occurs at time $t_k$, an idealised spike train can be written using Dirac's delta:
+
+$$
+s(t) = \sum_k \delta(t-t_k).
+$$
+
+The delta is not claiming that the biological voltage becomes literally infinite. It is not an ordinary pulse at all, but a mathematical distribution whose integral is one and whose entire job is to mark an event at an exact time:
+
+$$
+\int_{-\infty}^{\infty}
+f(t)\delta(t-t_k)\,dt
+=
+f(t_k).
+$$
+
+This deliberately throws away the action potential's waveform and preserves when it happened. Software using a fixed time step turns that continuous event train into counts:
+
+$$
+y[n]
+=
+\int_{n\Delta t}^{(n+1)\Delta t}s(t)\,dt.
+$$
+
+The result is zero when the bin contains no spike, one when it contains one and possibly more if the bin is wide enough to hide several. The Dirac representation gives us exact event times; binning makes those events fit the clock. That convenience is also the first place timing information can be lost.
+
+<SpikingNetwork />
+
+That difference becomes painful at scale.
+
+For $N$ neurons simulated for duration $T$ with step $\Delta t$, the state-update work is roughly:
+
+$$
+W_{\mathrm{state}}
+\propto
+\frac{T}{\Delta t}N C_{\mathrm{update}},
+$$
+
+where $C_{\mathrm{update}}$ is the cost of one neuron's equations. Halving the time step roughly doubles this work before we have simulated a single synapse.
+
+Synapses add another problem. A dense network of $N$ neurons can contain $O(N^2)$ connections.[^synapses] Real networks are normally sparse, which helps, but a spike may still require scattered reads and writes across a large synaptic table. Modern processors are extraordinarily good at arithmetic and comparatively grumpy about waiting for memory.
+
+This creates several mismatches on ordinary hardware.
+
+### The clock tax
+
+Even a neuron receiving no useful input is inspected at every fixed time step. A million quiet neurons remain a million items on a to-do list.
+
+### The memory tax
+
+Voltage, conductances, refractory state, delays and synaptic weights must move through the memory hierarchy. The arithmetic can be cheaper than fetching the values needed to perform it.
+
+### The serial-dependency tax
+
+The next voltage depends on the current voltage. Parallel hardware can update many neurons together, but it cannot usually calculate the same neuron's next thousand steps simultaneously. Time remains stubbornly sequential.
+
+### The event tax
+
+Threshold crossings create irregular work. CPUs tolerate branches; GPUs prefer many lanes doing the same thing. Sparse spikes are efficient in principle but can cause divergent execution and irregular memory access on hardware designed for dense, orderly workloads.
+
+### The accuracy tax
+
+Floating-point arithmetic is finite, integration methods have error and spike thresholds are discontinuities. A tiny voltage difference can move a spike into the next time bin, which then changes downstream spikes. Running the same wrong model faster merely lets physics be wrong at several billion operations per second.
+
+Vectorised CPU code, multithreading and GPUs all help. They do not remove the underlying negotiation between biological time, numerical accuracy, memory bandwidth and parallelism.
+
+## Brian2: Write the Mathematics, Generate the Loop
+
+This is where simulators such as [Brian2](https://brian2.readthedocs.io/en/stable/) are valuable. Brian2 lets a model be written in terms of equations, units, thresholds and resets instead of manually writing the complete simulation engine.
+
+A leaky neuron can be described directly:
+
+```python
+from brian2 import *
+
+tau = 10 * ms
+rest = -70 * mV
+threshold_value = -50 * mV
+reset_value = -65 * mV
+
+neurons = NeuronGroup(
+    1000,
+    "dv/dt = (rest - v) / tau : volt (unless refractory)",
+    threshold="v >= threshold_value",
+    reset="v = reset_value",
+    refractory=2 * ms,
+    method="exact",
+)
+neurons.v = rest
+```
+
+The important part is not that Python can hold an equation in a string. The important part is that Brian understands the model's structure. It checks physical units, chooses or accepts an integration method, schedules threshold and reset operations and manages populations and synapses.[^brian-models]
+
+Brian then separates the **model description** from the **execution target**. Its default runtime mode keeps the simulation loop in Python but generates compiled code for numerical integration and synaptic propagation when the required toolchain is available. Its C++ standalone mode generates a complete project that can be compiled and run without Python managing every time step.[^brian-computation]
+
+That distinction attacks a very specific performance problem: Python is pleasant for expressing experiments but expensive as the innermost loop of every neuron at every time step. Brian keeps the pleasant front end and moves repeated numerical work into generated code.
+
+It does not abolish computation. The same states still need updating and the same synapses still need visiting. Code generation removes interpreter overhead and enables compiler optimisation; it does not persuade one CPU core to become a cortex.[^brian]
+
+Brian is also useful because it keeps the mathematics visible. A hand-optimised simulator can slowly bury the original model under array layouts, kernels and scheduling machinery. With an equation-oriented system, the scientific description remains the source and the machinery becomes generated output. The computer gets its loops; the human gets to remember what they mean.
+
+## Software Model to Hardware Model
+
+Once the recurrence is known, it can be mapped into a circuit. For the integrate-and-fire model, hardware needs:
+
+- registers or memory for voltage and refractory state;
+- arithmetic for leak and input integration;
+- a comparator for the threshold;
+- reset logic;
+- a route for the output spike.
+
+An FPGA can pipeline those operations and update several cells in parallel. A custom neuromorphic chip can go further by making local state and event routing part of the architecture. Instead of repeatedly fetching every neuron's state through a general-purpose memory system, computation can happen near the stored state and communication can occur only on spikes.
+
+The mathematical model has not changed:
+
+$$
+\text{state}
+\longrightarrow
+\text{update}
+\longrightarrow
+\text{threshold}
+\longrightarrow
+\text{event}.
+$$
+
+The execution model has.
+
+This is why neuromorphic hardware is not merely a faster CPU. It trades generality for a physical structure closer to the workload. That can reduce data movement and avoid updating inactive parts of a network, but the trade is real. A CPU will happily run a different model after lunch. A custom circuit may require a new hardware design because somebody added one term to an equation.
+
+## Fixed Point: Where Decimals Go to Negotiate
+
+Software models are commonly trained and tested with floating-point numbers. Hardware designs often use fixed-point integers because they require less area, power and design complexity.
+
+A real value $x$ can be quantised with $f$ fractional bits:
+
+$$
+Q(x)
+=
+\operatorname{clip}
+\left(
+\operatorname{round}(x2^f),
+q_{\min},
+q_{\max}
+\right).
+$$
+
+More bits preserve small differences but consume more storage and arithmetic resources. Fewer bits make the design smaller but introduce rounding and saturation. If a voltage clips before reaching its threshold, the hardware neuron may achieve the rare feat of being both very fast and completely silent.
+
+The safe process is empirical:
+
+1. fit and validate the model in high precision;
+2. record the range of every state and intermediate value;
+3. choose fixed-point formats;
+4. replay held-out inputs through the quantised model;
+5. compare firing rates, spike timing and downstream behaviour;
+6. reduce precision only while the required behaviour survives.
+
+Quantisation is part of the model conversion, not a packaging step after it.
+
+## What Should Be Preserved?
+
+An emulator should be judged against its contract. Exact internal agreement is unnecessary if the desired observable behaviour survives.
+
+For a single cell, useful checks include:
+
+- membrane trajectory error;
+- average firing rate;
+- spike-time distance or coincidence;
+- receptive-field shape;
+- response to inputs not used during fitting;
+- stability across a long simulation.
+
+For software and hardware implementations, add:
+
+- maximum real-time step latency;
+- memory use and bandwidth;
+- energy per update or per spike;
+- effect of reduced precision;
+- agreement between execution targets.
+
+For a population, the best test may be the downstream task. If a visual model exists to detect motion, a small difference in individual spike times may be irrelevant while a missed moving object is not.
+
+The conversion therefore forms a chain:
+
+$$
+\text{cell}
+\longrightarrow
+\text{equation}
+\longrightarrow
+\text{numerical method}
+\longrightarrow
+\text{software}
+\longrightarrow
+\text{hardware}.
+$$
+
+Each arrow introduces an approximation. Biology is simplified into a model. Continuous equations are discretised. Floating-point values are quantised. Parallel events are scheduled. The job is not to pretend those losses do not exist; it is to measure them and keep the losses outside the behaviour we promised to preserve.
+
+## Conclusion
+
+Turning a neural cell into software is not a matter of scanning it into a computer. It is a series of increasingly practical decisions.
+
+Define the cell's useful contract. Choose a mechanistic equation or identify one from data. Convert continuous dynamics into a stable discrete update. Add event rules for spikes. Test the model outside its training conditions. Then decide whether the workload belongs on a CPU, generated C++, a GPU, an FPGA or dedicated neuromorphic hardware.
+
+Brian2 demonstrates an important middle ground. We can write the scientific model as equations and let code generation handle much of the repetitive machinery. That makes ordinary hardware far more useful without concealing its limits. Dedicated hardware takes the next step by changing the machine to suit the equation.
+
+The final implementation is not the cell. It is a deliberate, testable imitation of a behaviour we care about. That may sound less dramatic than building a digital neuron.
+
+It is also how we know whether the thing works.
+
+[^sand]: This is technically unfair to semiconductor engineering, which is precisely why I enjoy saying it.
+[^friends]: It becomes considerably more expensive when the neuron starts having friends. Synapses are where the invoice begins.
+[^synapses]: The brain avoids connecting every neuron to every other neuron. It has limited room and, apparently, standards.
+[^brian]: Brian is the simulator; brain is the organ. One is considerably easier to reinstall when an experiment goes wrong.
+[^narmax]: S. A. Billings, ["Nonlinear System Identification: NARMAX Methods in the Time, Frequency, and Spatio-Temporal Domains"](https://www.wiley.com/en-us/Nonlinear+System+Identification%3A+NARMAX+Methods+in+the+Time%2C+Frequency%2C+and+Spatio+Temporal+Domains-p-9781119943594), Wiley, 2013.
+[^brian-models]: Brian2 documentation, ["Models and neuron groups"](https://brian2.readthedocs.io/en/stable/user/models.html). Brian expresses shared neuron dynamics as equations and defines spikes with threshold, reset and refractory rules.
+[^brian-computation]: Brian2 documentation, ["Computational methods and efficiency"](https://brian2.readthedocs.io/en/stable/user/computation.html). Runtime code generation can target compiled Cython, while standalone mode generates a C++ project.

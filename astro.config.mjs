@@ -1,9 +1,12 @@
 // @ts-check
 
+import { unified } from '@astrojs/markdown-remark';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig, fontProviders } from 'astro/config';
+import rehypeKatex from 'rehype-katex';
 import rehypeMermaid from 'rehype-mermaid';
+import remarkMath from 'remark-math';
 
 // https://astro.build/config
 export default defineConfig({
@@ -11,7 +14,14 @@ export default defineConfig({
 	site: 'https://shaneharrigan.github.io',
 	output: 'static',
 	markdown: {
-		rehypePlugins: [[rehypeMermaid, { strategy: 'inline-svg' }]],
+		syntaxHighlight: {
+			type: 'shiki',
+			excludeLangs: ['mermaid'],
+		},
+		processor: unified({
+			remarkPlugins: [remarkMath],
+			rehypePlugins: [rehypeKatex, [rehypeMermaid, { strategy: 'inline-svg' }]],
+		}),
 	},
 	integrations: [mdx(), sitemap()],
 	fonts: [

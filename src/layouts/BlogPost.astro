@@ -7,10 +7,17 @@ import Footer from '../components/Footer.astro';
 import FootnotePreviews from '../components/FootnotePreviews.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import MicrosoftScrollReassembly from '../components/MicrosoftScrollReassembly.astro';
+import MicrosoftWordmark from '../components/MicrosoftWordmark.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, writtenDate, updatedDate, heroImage } = Astro.props;
+const { title, description, titleBrand, pubDate, writtenDate, updatedDate, heroImage } =
+	Astro.props;
+const microsoftIndex = titleBrand === 'microsoft' ? title.indexOf('Microsoft') : -1;
+const titleBeforeBrand = microsoftIndex >= 0 ? title.slice(0, microsoftIndex) : title;
+const titleAfterBrand =
+	microsoftIndex >= 0 ? title.slice(microsoftIndex + 'Microsoft'.length) : '';
 ---
 
 <html lang="en">
@@ -80,10 +87,23 @@ const { title, description, pubDate, writtenDate, updatedDate, heroImage } = Ast
 								)
 							}
 						</div>
-						<h1>{title}</h1>
+						<h1>
+							{
+								microsoftIndex >= 0 ? (
+									<>
+										{titleBeforeBrand}
+										<MicrosoftWordmark />
+										{titleAfterBrand}
+									</>
+								) : (
+									title
+								)
+							}
+						</h1>
 						<hr />
 					</div>
 					<slot />
+					{titleBrand === 'microsoft' && <MicrosoftScrollReassembly />}
 				</div>
 			</article>
 		</main>

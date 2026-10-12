@@ -20,6 +20,7 @@ const blog = defineCollection({
 		z.object({
 			title: z.string(),
 			description: z.string(),
+			titleBrand: z.literal('microsoft').optional(),
 			// Transform string to Date object
 			pubDate: z.coerce.date(),
 			writtenDate: z.union([z.coerce.date(), writingPeriod]).optional(),

@@ -168,6 +168,28 @@ If I propose an explanation, I want it checked, not merely made more eloquent. I
 
 The conversational habit transfers. The trust model does not.
 
+## Read the Abstract, Then Make a Guess
+
+I used a version of this habit in my academic work too.
+
+I would read a paper's abstract, then pause and guess how the authors had done it. Given the problem and the result they described, what approach would get them there?
+
+Then I would check.
+
+If the method matched my prediction, I often knew enough for my immediate purpose and did not need to read the paper in depth. If I was wrong, there was something to learn. The gap between my explanation and theirs gave me a reason to pay closer attention.
+
+It was a way to decide where to spend my reading time, not a claim that predicting a method meant I had verified the evidence. Reading to assess or rely on a result asks more of me. But when exploring, the surprise was a useful guide.
+
+Making the guess first mattered. An explanation can seem obvious once somebody has shown it to me. Predicting it beforehand gives me something less flattering and more useful to compare against: what I actually thought.
+
+The same thing happens at the REPL. Before evaluating an expression, I can ask what I expect it to return. If the result differs, I have found a specific place where my understanding needs work.
+
+With an assistant, I can bring a hypothesis rather than only a request: "I think this happens because of X. What evidence would distinguish that from Y?" Its response still needs checking, but the question gives the exchange somewhere useful to go.
+
+Across papers, programs and prompts, I recognise the same loop: make a prediction, look at what is actually there, and investigate the difference.
+
+Being right lets me move on. Being wrong gives me somewhere to learn.
+
 ## Put the Useful Parts Somewhere Durable
 
 A good REPL session can leave behind a slightly dangerous feeling: I have seen it work, therefore the work is finished.

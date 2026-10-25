@@ -1,0 +1,151 @@
+<figure class="branch-map">
+	<div class="map-header">
+		<span class="eyebrow">The review network</span>
+		<strong>Next stop: a tested contribution.</strong>
+	</div>
+	<ul class="legend" aria-label="Branch lines">
+		<li><span class="line main-line" aria-hidden="true"></span><code>main</code></li>
+		<li><span class="line feature-line" aria-hidden="true"></span>Feature branch</li>
+		<li><span class="line patch-line" aria-hidden="true"></span>Review patch</li>
+	</ul>
+	<div class="map-scroll" role="region" aria-label="Branch map, scroll horizontally on small screens" tabindex="0">
+		<svg viewBox="0 0 1120 440" role="img" aria-labelledby="review-map-title review-map-description">
+			<title id="review-map-title">A patch-in PR, drawn as a transit network</title>
+			<desc id="review-map-description">
+				Time moves left to right. The feature branch leaves main. At the reviewed
+				commit, a separate review patch branches off, adds a fix and regression
+				test, and runs checks. After human acceptance, the patch merges into the
+				feature branch, where combined checks run again. The original PR then
+				merges into main after approval. The patch never merges directly into main.
+			</desc>
+			<g class="tracks" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+				<path class="main-track" d="M 50 90 H 1080" />
+				<path class="feature-track" d="M 150 90 H 170 Q 190 90 210 110 L 260 160 Q 280 180 310 180 H 900 Q 930 180 950 160 L 1000 110 Q 1020 90 1040 90" />
+				<path class="patch-track" d="M 410 180 H 430 Q 450 180 470 200 L 520 250 Q 540 270 570 270 H 730 Q 760 270 780 250 L 830 200 Q 850 180 880 180 H 900" />
+			</g>
+			<g class="stations" fill="#fff" stroke-width="5">
+				<circle class="interchange" cx="150" cy="90" r="10" />
+				<circle class="feature-station" cx="330" cy="180" r="8" />
+				<circle class="interchange" cx="410" cy="180" r="10" />
+				<circle class="patch-station" cx="580" cy="270" r="8" />
+				<circle class="patch-station" cx="710" cy="270" r="8" />
+				<circle class="interchange" cx="900" cy="180" r="10" />
+				<circle class="interchange" cx="1040" cy="90" r="10" />
+			</g>
+			<g class="labels">
+				<text x="150" y="48" text-anchor="middle">Branch off</text>
+				<text x="330" y="225" text-anchor="end">Build feature</text>
+				<text x="410" y="124" text-anchor="middle">
+					<tspan x="410">Reviewed</tspan><tspan x="410" dy="25">commit</tspan>
+				</text>
+				<text x="580" y="315" text-anchor="middle">
+					<tspan x="580">Fix +</tspan><tspan x="580" dy="25">regression test</tspan>
+				</text>
+				<text x="710" y="225" text-anchor="middle">Run checks</text>
+				<text x="900" y="225" text-anchor="middle">
+					<tspan x="900">Accept patch</tspan><tspan x="900" dy="25">+ rerun checks</tspan>
+				</text>
+				<text x="1040" y="32" text-anchor="end">
+					<tspan x="1040">Merge original PR</tspan><tspan x="1040" dy="25">after approval</tspan>
+				</text>
+			</g>
+			<g class="route-notes">
+				<text x="70" y="390">TIME MOVES LEFT TO RIGHT</text>
+				<path d="M 410 383 H 1050 M 1038 375 L 1050 383 L 1038 391" fill="none" stroke="currentColor" stroke-width="2" />
+			</g>
+		</svg>
+	</div>
+	<figcaption>
+		Two PRs, two destinations: the review patch joins the feature branch;
+		the original PR carries the combined change to <code>main</code>.
+	</figcaption>
+</figure>
+
+<style>
+	.branch-map {
+		--map-main: #24365b;
+		--map-feature: #006c70;
+		--map-patch: #ba450c;
+		margin: 2em 0;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 16px;
+		background: #fcfbf7;
+		overflow: hidden;
+	}
+	.map-header {
+		display: grid;
+		gap: 0.3rem;
+		padding: 1.5rem 1.5rem 0;
+	}
+	.eyebrow {
+		color: var(--map-feature);
+		font-size: 0.65em;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+	.map-header strong {
+		color: var(--map-main);
+		font-size: 1.15em;
+		line-height: 1.3;
+	}
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.5rem;
+		margin: 1rem 0;
+		padding: 0 1.5rem;
+		list-style: none;
+		font-size: 0.75em;
+	}
+	.legend li {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.line {
+		width: 1.5rem;
+		height: 0.3rem;
+		border-radius: 1rem;
+	}
+	.main-line { background: var(--map-main); }
+	.feature-line { background: var(--map-feature); }
+	.patch-line { background: var(--map-patch); }
+	.map-scroll {
+		overflow-x: auto;
+	}
+	.map-scroll:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: -3px;
+	}
+	svg {
+		display: block;
+		width: 100%;
+		min-width: 640px;
+		height: auto;
+	}
+	.main-track { stroke: var(--map-main); }
+	.feature-track,
+	.feature-station { stroke: var(--map-feature); }
+	.patch-track,
+	.patch-station { stroke: var(--map-patch); }
+	.interchange { stroke: var(--map-main); }
+	.labels {
+		fill: var(--map-main);
+		font-size: 22px;
+		font-weight: 700;
+	}
+	.route-notes {
+		color: #566079;
+		fill: currentColor;
+		font-size: 16px;
+		letter-spacing: 1.5px;
+	}
+	figcaption {
+		padding: 1rem 1.5rem;
+		border-top: 1px solid rgb(var(--gray-light));
+		color: rgb(var(--gray-dark));
+		font-size: 0.75em;
+		line-height: 1.6;
+	}
+</style>

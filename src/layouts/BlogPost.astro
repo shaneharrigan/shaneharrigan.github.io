@@ -1,8 +1,11 @@
 ---
 import { Image } from 'astro:assets';
+import type { MarkdownHeading } from 'astro';
 import type { CollectionEntry } from 'astro:content';
 import 'katex/dist/katex.min.css';
 import BaseHead from '../components/BaseHead.astro';
+import ChapterNavigation from '../components/ChapterNavigation.astro';
+import CodeBlockTools from '../components/CodeBlockTools.astro';
 import Footer from '../components/Footer.astro';
 import FootnotePreviews from '../components/FootnotePreviews.astro';
 import FormattedDate from '../components/FormattedDate.astro';
@@ -10,9 +13,9 @@ import Header from '../components/Header.astro';
 import MicrosoftScrollReassembly from '../components/MicrosoftScrollReassembly.astro';
 import MicrosoftWordmark from '../components/MicrosoftWordmark.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = CollectionEntry<'blog'>['data'] & { headings: MarkdownHeading[] };
 
-const { title, description, titleBrand, pubDate, writtenDate, updatedDate, heroImage } =
+const { title, description, titleBrand, pubDate, writtenDate, updatedDate, heroImage, headings } =
 	Astro.props;
 const microsoftIndex = titleBrand === 'microsoft' ? title.indexOf('Microsoft') : -1;
 const titleBeforeBrand = microsoftIndex >= 0 ? title.slice(0, microsoftIndex) : title;
@@ -44,6 +47,119 @@ const titleAfterBrand =
 				margin: auto;
 				padding: 1em;
 				color: rgb(var(--gray-dark));
+			}
+			.prose :global(h2[id]) {
+				scroll-margin-top: 5rem;
+			}
+			.prose :global(.post-summary) {
+				margin: 0.5em 0 2.5em;
+				padding: clamp(1rem, 3vw, 1.75rem);
+				border: 1px solid #d8ddff;
+				border-left: 4px solid var(--accent);
+				border-radius: 12px;
+				background: linear-gradient(135deg, #f1f3ff, #f8faff);
+				font-size: 0.9em;
+				line-height: 1.6;
+			}
+			.prose :global(.post-summary h2) {
+				margin-bottom: 0.85em;
+				color: var(--accent-dark);
+				font-size: 0.85em;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+			}
+			.prose :global(.post-summary p) {
+				margin: 0 0 1em;
+			}
+			.prose :global(.post-summary ul) {
+				margin: 0;
+				padding-inline-start: 1.2em;
+			}
+			.prose :global(.post-summary li) {
+				padding-inline-start: 0.2em;
+			}
+			.prose :global(.post-summary li + li) {
+				margin-top: 0.75em;
+			}
+			.prose :global(.post-summary li::marker) {
+				color: var(--accent);
+			}
+			.prose :global(details) {
+				margin: 2em 0;
+				padding: 1em 1.2em;
+				border: 1px solid rgb(var(--gray-light));
+				border-radius: 10px;
+				background: #fff;
+			}
+			.prose :global(summary) {
+				cursor: pointer;
+				font-weight: 700;
+				line-height: 1.5;
+			}
+			.prose :global(summary::marker) {
+				color: var(--accent);
+			}
+			.prose :global(summary:focus-visible) {
+				outline: 2px solid var(--accent);
+				outline-offset: 4px;
+				border-radius: 2px;
+			}
+			.prose :global(details[open] > summary) {
+				margin-bottom: 1.25em;
+				padding-bottom: 0.85em;
+				border-bottom: 1px solid rgb(var(--gray-light));
+			}
+			.prose :global(details > :last-child:not(summary)) {
+				margin-bottom: 0;
+			}
+			.prose :global(.table-scroll) {
+				margin: 2em 0;
+				overflow-x: auto;
+				border: 1px solid rgb(var(--gray-light));
+				border-radius: 10px;
+				background: #fff;
+			}
+			.prose :global(.table-scroll:focus-visible) {
+				outline: 2px solid var(--accent);
+				outline-offset: 4px;
+			}
+			.prose :global(table) {
+				width: 100%;
+				table-layout: fixed;
+				border-collapse: separate;
+				border-spacing: 0;
+				font-size: 0.85em;
+				line-height: 1.6;
+				text-align: left;
+			}
+			.prose :global(.table-scroll table) {
+				min-width: 38rem;
+			}
+			.prose :global(th),
+			.prose :global(td) {
+				padding: 1em 1.1em;
+				vertical-align: top;
+			}
+			.prose :global(th) {
+				background: rgb(var(--gray-dark));
+				color: #fff;
+				font-size: 0.8em;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+			}
+			.prose :global(th:first-child),
+			.prose :global(td:first-child) {
+				width: 24%;
+			}
+			.prose :global(td:first-child) {
+				color: rgb(var(--black));
+				font-weight: 700;
+			}
+			.prose :global(tbody tr + tr td) {
+				border-top: 1px solid rgb(var(--gray-light));
+			}
+			.prose :global(tbody tr:nth-child(even)) {
+				background: rgba(var(--gray-light), 25%);
 			}
 			:global(.katex-display) {
 				overflow-x: auto;
@@ -102,6 +218,7 @@ const titleAfterBrand =
 						</h1>
 						<hr />
 					</div>
+					<ChapterNavigation headings={headings} />
 					<slot />
 					{titleBrand === 'microsoft' && <MicrosoftScrollReassembly />}
 				</div>
@@ -109,5 +226,6 @@ const titleAfterBrand =
 		</main>
 		<Footer />
 		<FootnotePreviews />
+		<CodeBlockTools />
 	</body>
 </html>

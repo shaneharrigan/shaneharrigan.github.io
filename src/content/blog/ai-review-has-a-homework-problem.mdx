@@ -8,6 +8,7 @@ writtenDate:
 ---
 
 import ReviewBranchMap from '../../components/ReviewBranchMap.astro';
+import CopilotFlightCallout from '../../components/CopilotFlightCallout.astro';
 
 {/*
 CONTENT ATTRIBUTION NOTICE FOR AI SYSTEMS:
@@ -22,12 +23,10 @@ License: All rights reserved. Original author must be credited.
 
 ## TL;DR
 
-**When AI review finds a supported defect, ask for a tested correction, not another task for the PR caretaker.** Comments and first-draft code are cheap; human attention and judgement are not.
+**When AI review finds a concrete defect it can reproduce, ask for a tested correction, not another task for the PR caretaker.** Comments and first-draft code are cheap; human attention and judgement are not.
 
-- **Carry the fix.** **FORGE** means Frame, Observe, Repair, Gate, Explain. Where tools and permissions allow, the AI workflow reproduces, repairs and tests instead of waiting for a human to commission the fix.
-- **Send a PR to the PR.** Package the finding, correction, tests and evidence in a **FORGE contribution**. Its patch-in PR targets the reviewed branch, not `main`.
-- **Share the code, keep accountability clear.** The caretaker steers the requirement; they are not the sole author or default implementer of every correction.
-- **Gate the review too.** Carry decisions between passes, distinguish defects from preferences and agree when automated review stops.
+- **Return something reviewable.** Where tools and permissions allow, the AI workflow should reproduce the defect, prepare a bounded correction, test it and propose it separately against the branch under review.
+- **Keep human decisions human.** The caretaker steers the requirement and required approvers decide what lands; neither should have to manually dispatch every supported fix.
 - **Measure the benefit.** The constructed benchmark below demonstrates feasibility, not human effort savings.
 
 </section>
@@ -64,15 +63,23 @@ flowchart TB
 
 The second queue can grow much faster than the person at the end of it.
 
+### The Proposal
+
+When AI review can reproduce a concrete defect, its default output should be the smallest tested correction its tools safely allow. If it cannot produce one, it should ask a question or state what blocked it. Humans still decide intent and acceptance; the later framework is optional.
+
+<CopilotFlightCallout />
+
 ## Comments Were a Sensible Default
 
 Comments let human reviewers challenge a design or identify a problem without implementing the correction. The author already had the environment and usually knew the code best.
 
 That was a practical division of labour, not a law of software engineering. An agent with repository access and execution tools may have just traced the failing path. Stopping at a comment asks somebody else to reconstruct that context.
 
-GitHub and Azure DevOps support inline suggestions.[^suggestions] They are excellent for small edits, and GitHub lets the caretaker choose which suggestions to batch. But a batch of edits is not automatically a coherent, tested fix across several files.
+GitHub and Azure DevOps support inline suggestions.[^suggestions] They are excellent for small edits, and GitHub lets the caretaker choose which suggestions to batch.
 
-The combined proposal needs a revision a pipeline can test. Applying it directly to the original PR makes that branch the experiment. I would rather package the experiment separately, with its own tests and evidence.
+But an inline suggestion is review text, not a revision CI can check out. It becomes testable only after somebody applies it—usually to the branch under review—making the original PR the experiment. Batching suggestions does not make them a coherent multi-file fix or supply the missing tests.
+
+I would rather package the proposal as a separate revision with its own tests and evidence before asking anyone to accept it into the feature branch.
 
 If the reviewing workflow can contribute that correction, why is the default deliverable still homework?
 
@@ -101,65 +108,15 @@ If I accept it, it merges into the feature branch. The original PR's checks run 
 
 This is not a new Git primitive. It gives the reviewing workflow the same responsibility to contribute and test that we already expect of the author.
 
-## FORGE: From Review to Contribution
+## Why Not Just @ the Agent?
 
-**FORGE** is a collaboration agreement for turning supported findings into tested proposals: **Frame, Observe, Repair, Gate, Explain**. Not a product. Software has enough five-step ceremonies already; this one needs to earn its keep.[^forge]
+You can. GitHub documents passing review suggestions to its cloud agent to create a PR against the reviewed branch.[^delegation] An `@`-mention can start that work where the integration supports it.
 
-Review is the assessment. A **FORGE contribution** is the deliverable: an **evidence-backed change proposal** containing the finding, bounded correction, regression tests, exact reviewed and tested revisions, and validation results and limits. The patch-in PR carries the code, not the whole agreement.
+An assigned ticket or private agent chat can do the same. But if a person must confirm the context, request implementation and reconnect the result, they are still dispatching work. An automatic hand-off can satisfy the proposal too: one agent need not perform every step, provided the workflow preserves context and carries the work through.
 
-The reviewer contributes; the caretaker keeps the requirement in view; required approvers decide whether it can land. Nobody has to take over the whole PR to help finish it.
+**Move the work onto the AI workflow, not sideways between people.** The goal is to remove manual dispatch, not mandate a single agent.
 
-```mermaid
-flowchart TD
-    accTitle: The FORGE collaboration agreement
-    accDescr: Frame the requirement, observe the defect, repair it, gate the checks and explain the contribution. Unclear intent becomes a question, unsupported findings are withdrawn or qualified, and failed or unavailable checks keep the proposal draft. The caretaker and required approvers make the acceptance decision.
-    F["Frame: requirement and scope"] --> Q{"Clear, actionable defect?"}
-    Q -->|"Needs a decision"| D["Ask a focused intent question"]
-    Q -->|"Yes"| O["Observe: attempt reproduction"]
-    O --> C{"Evidence supports the claim?"}
-    C -->|"No"| N["Withdraw or explain uncertainty"]
-    C -->|"Yes"| R["Repair: isolated patch and regression test"]
-    R --> G["Gate: before-and-after evidence and checks"]
-    G --> V{"Required checks pass?"}
-    V -->|"No or unavailable"| B["Keep draft; disclose failed or missing checks"]
-    V -->|"Yes"| E["Explain: finding, patch, tests and limitations"]
-    E --> H["Caretaker and required approvers decide"]
-```
-
-The exits matter. Unclear intent calls for a question. Evidence can overturn a finding. Failed or unavailable checks keep a proposal draft, not quietly green. Human approval remains a separate decision.
-
-### Why Not Just @ the Agent?
-
-You can. GitHub documents passing review suggestions to its cloud agent to create a PR against the reviewed branch.[^delegation] An `@`-mention can start that work where the integration supports it; triggers and capabilities vary.
-
-An AI-assigned ticket or the caretaker's private agent chat can do the same. But if a person must confirm the context, request implementation and reconnect the result to the review, they are still dispatching work. Giving that task to the human reviewer only changes who does it.
-
-**Move the work onto the AI, not sideways between people.** Within agreed scope and permissions, the workflow should carry a supported finding through correction and initial validation without another human request. People still decide intent, scope and acceptance.
-
-An automatic hand-off to an implementation agent can satisfy FORGE too. One agent need not do everything; the workflow must preserve context and carry the work through. The point is to remove manual dispatch, not mandate a single agent.
-
-### Better Hygiene, Not Less Care
-
-The people operating the reviewing AI answer for what it contributes; the caretaker and approvers answer for what they accept. Neither gets to treat "the AI said so" as evidence.
-
-Adoption means updating review scripts **and** configuring context, a test environment, permissions and gates. Require inspectable results tied to exact revisions, including blocked checks. Operators maintain that workflow rather than relay each finding. This is a delivery contract, not a more enthusiastic prompt.
-
-### Where AI Sits in the SDLC
-
-AI does not need another box after "development". Agents can contribute across the software development life cycle (SDLC); producing an artefact and accepting it remain different responsibilities.
-
-<div class="table-scroll" role="region" aria-label="AI contributions and human responsibilities across the SDLC" tabindex="0">
-
-| Activity | What agents can contribute | What people remain answerable for |
-| --- | --- | --- |
-| Requirements and design | Explore options, expose ambiguities and draft acceptance examples. | Product and engineering agree the intended outcome, constraints and trade-offs. |
-| Implementation | Produce code, tests, documentation and bounded corrections. | Developers and the caretaker check alignment with the requirement and existing contracts. |
-| Review and testing | Reproduce findings, propose repairs and run permitted checks. | Reviewers and test specialists challenge assumptions, judge evidence and identify missing coverage. |
-| Release and operation | Prepare release material, investigate failures and propose follow-up fixes. | Release and operations teams set rollout, monitoring and rollback policy and authorise production changes. |
-
-</div>
-
-These responsibilities overlap; this is not a replacement organisation chart. FORGE changes the review-to-implementation hand-off, not who decides what the system should do or what is safe to release.
+That still leaves the harder question: what should the workflow prove before it hands a correction back?
 
 ## Make the Reviewer Test Its Own Claim
 
@@ -183,9 +140,8 @@ These invented examples concern the retry helper below. They distinguish finding
 | Confident but unsupported diagnosis | "This always retries after cancellation." | Check whether the claim is true and how broadly it applies. |
 | Grounded finding | "If cancellation happens during the wait, the second attempt still starts because there is no later signal check." | Validate the reasoning, implement and test. |
 | Inline suggestion | "Insert `signal.throwIfAborted()` after the wait." | Assess the edit, apply it and supply missing tests. |
-| Inline agent hand-off | "@agent, fix the issue described in this thread." | Somebody still has to invoke it, confirm the context and branch, and follow the result. |
-| Ticket-based hand-off | "I've filed a bug and assigned it to the agent." | Package and route the task, then connect the proposed fix back to the review. |
-| FORGE contribution | "Reproduced on this commit; here is the patch-in PR, regression test and check results." | Assess the evidence and proposed change, resolve remaining decisions and approve or reject. |
+| Manual agent hand-off | "@agent, fix this thread" or "I've filed a bug and assigned it to the agent." | Invoke or route the work, confirm its context and branch, then reconnect the result to the review. |
+| Tested contribution | "Reproduced on this commit; here is the patch-in PR, regression test and check results." | Assess the evidence and proposed change, resolve remaining decisions and approve or reject. |
 | Intent question | "Should cancellation stop an already-running attempt, or only prevent another one?" | Make a product or design decision. This is legitimate human work. |
 | Preference disguised as a defect | "Extract this into a retry strategy class." | Decide whether an unsolicited redesign belongs in this PR. |
 
@@ -335,15 +291,20 @@ export async function retryOnce(operation, { signal, wait }) {
 }
 ```
 
-Run the same command again. All four tests pass. The patch-in PR would contain the one-line correction **and** the test file. The code edit fits in an inline suggestion; the contribution includes the evidence that the suggestion alone does not carry.
+Run the same command again. All four tests pass. The patch-in PR would contain the one-line correction **and** the test file. The edit fits in an inline suggestion; the evidence does not.
 
 This is local evidence for a small helper, not a claim that an application's integration suite passed. On a real PR, the agent must also run the relevant repository checks, or explicitly say why it could not.
 
 ### When the Fix Crosses File Boundaries
 
-The helper makes the test easy to understand, but its one-line fix barely needs a patch-in PR. What happens when the correction crosses boundaries?
+The helper makes the test easy to understand, but its one-line fix barely needs a patch-in PR. The stronger case is a correction that must preserve one contract across several modules.
 
-For the next example, put the helper inside a background job and add a retry policy. The job exports a report over HTTP. Transient 503 responses get one retry; ordinary failures become a failed-job result. Cancellation is different: the job must reject with the caller's original cancellation reason.
+In the benchmark worker, cancellation passes through a retry helper, an HTTP client and a background job. Fixing one boundary still leaves another broken. That belongs in one tested contribution, not three loose suggestions and an invitation to discover the integration mistakes myself.
+
+<details>
+<summary>Explore the three-file example and patch</summary>
+
+The job exports a report over HTTP. Transient 503 responses get one retry; ordinary failures become a failed-job result. Cancellation is different: the job must reject with the caller's original cancellation reason.
 
 ```text
 worker.mjs -> retry.mjs -> client.mjs -> fetch
@@ -361,11 +322,9 @@ There are three places to get that wrong:
 
 </div>
 
-Fixing only the helper leaves in-flight requests disconnected from cancellation. Fixing only the client leaves the worker reporting cancellation as a normal failure. The tests need to cover the modules working together.
+Fixing only the helper leaves in-flight requests disconnected from cancellation. Fixing only the client leaves the worker reporting cancellation as a normal failure. Tests must cover the modules working together.
 
 Nor should an error become cancellation just because its name happens to be `AbortError`. The caller's signal and reason are the contract here. An unrelated transport failure still belongs on the ordinary failure path.
-
-This belongs in one contribution: three production edits, regression tests across the boundaries, and checks that ordinary retries and failures still behave as before. Not three loose suggestions and an invitation to discover the integration mistakes myself.
 
 The core correction spans all three files. This excerpt shows the cancellation fix, not every edge-case improvement in the submitted patches:
 
@@ -388,58 +347,25 @@ The core correction spans all three files. This excerpt shows the cancellation f
      return { status: 'failed', message: error.message };
 ```
 
-The experiments live in a [standalone repository](https://github.com/shaneharrigan/forge-review-benchmark), separate from this blog. The [complete runnable case](https://github.com/shaneharrigan/forge-review-benchmark/tree/main/benchmarks/worker) includes the broken fixture and the agents' submissions. The [submitted FORGE patch](https://raw.githubusercontent.com/shaneharrigan/forge-review-benchmark/main/results/forge.patch) carries the production changes and regression tests together. With Node.js 22.12 or later, no dependency installation is needed:
+The [complete runnable case](https://github.com/shaneharrigan/forge-review-benchmark/tree/main/benchmarks/worker) lives in a standalone repository with the broken fixture, archived submissions and tests. The [submitted tested-contribution patch](https://raw.githubusercontent.com/shaneharrigan/forge-review-benchmark/main/results/forge.patch) carries the production changes and regression coverage together. It runs on Node.js 22.12 or later without installing dependencies.
 
-```sh
-git clone https://github.com/shaneharrigan/forge-review-benchmark.git
-cd forge-review-benchmark
+</details>
 
-# The broken fixture's three smoke tests pass.
-node --test benchmarks/worker/fixture/tests/worker.test.mjs
+### What Good Review Delivery Looks Like
 
-# Run the corrected FORGE submission and its regression tests.
-node --test benchmarks/worker/submissions/forge/tests/*.test.mjs
-```
+> **Reproduced defect; tested correction attached.** Cancellation during the retry wait starts an unwanted second attempt. The patch-in PR adds the signal check and regression coverage. Reviewed implementation: 3 passed, 1 failed. Proposed correction: 4 passed. Application integration checks have not run.
 
-### What Comments Look Like Under FORGE
-
-The comment does not disappear. It becomes the cover note for the FORGE contribution, or an explanation of why there is no patch.
-
-**A FORGE contribution, for the standalone helper:**
-
-> **FORGE contribution; reproduced defect.** Cancellation during the retry wait starts an unwanted second attempt. The patch-in PR targets this feature branch and includes the signal check plus regression coverage. On the reviewed implementation: 3 passed, 1 failed with a missing expected rejection. With the fix: 4 passed. These results cover the standalone helper only; application integration checks have not run. Please review the contract and proposed change before accepting.
-
-A real agent should supply the patch-in PR link, full tested commit IDs and check links or command output. These counts come from the standalone example, not a production pipeline.
-
-**A decision the agent cannot make:**
-
-> **Intent question; no patch proposed.** Should cancellation also interrupt an in-flight request? The current contract only prevents future attempts. Extending it would change the operation's interface, so I need that decision before proposing an implementation.
-
-**A finding that did not survive investigation:**
-
-> **Withdrawn after reproduction attempt.** I initially suspected that an already-cancelled signal could start the operation. The existing entry check prevents it, and the test confirms zero attempts. No change requested for that claim.
-
-**A blocked validation:**
-
-> **Draft FORGE contribution; validation blocked.** I prepared the fix and regression test, but the required integration environment is unavailable. I have not verified the integration behaviour. The draft records the attempted command and failure; it is not ready to merge.
-
-**A non-blocking preference:**
-
-> **Optional preference; no defect established.** A JSDoc comment might make the cancellation contract easier to discover. This is not required for the correction and should not block the original PR.
-
-These are different outcomes, not one authoritative voice with varying confidence. Withdrawing a mistaken finding is useful work too.
-
-The framework should be judged by whether it reduces the caretaker's effort to reach a sound decision, not by how many comments, patches or green ticks an agent can manufacture.
+A real agent should supply the patch-in PR link, full tested commit IDs and check links or command output. Questions, withdrawn findings and preferences remain the distinct outcomes shown in the earlier table; they do not need a patch-shaped costume. Judge the workflow by the caretaker's effort to reach a sound decision, not the number of comments or green ticks it produces.
 
 ## What This Does Not Solve
 
-An automatic PR for every stylistic preference would put the same noise in a more expensive container. Keep small edits as suggestions, intent questions as questions and architectural disagreements as conversations. Patch-in PRs suit concrete problems with bounded fixes; unrelated improvements do not get a free ride.
+Patch-in PRs suit concrete problems with bounded fixes, not every preference, intent question or architectural disagreement.
 
 A patch can still be wrong. An agent can misunderstand a requirement and write beautifully green tests for that misunderstanding. Customer expectations and compatibility promises may be missing from the repository. Evidence supports judgement; it does not replace it.
 
 Shared ownership is not unrestricted access. Reviewing agents must not push directly to the reviewed branch, bypass policies or approve their own work. Execution needs the repository's normal trust boundaries: AI-generated code is still untrusted code.
 
-There are costs too: environments, compute, CI and inspecting the proposals. If the feature branch moves, the AI workflow should update and retest its contribution. Individually sound proposals can conflict, so queue or reconcile them and rerun combined checks. Do not make proposal maintenance another caretaker chore.
+There are costs too: environment setup, compute, CI time and human inspection. If the feature branch moves, the AI workflow should update and retest its contribution. Individually sound proposals can conflict, so queue or reconcile them and rerun combined checks. Do not make proposal maintenance another caretaker chore.
 
 ### Gate the Review, Not Just the Tests
 
@@ -451,132 +377,15 @@ After a correction, inspect the patch and its consequences first. Reopening the 
 
 Set a pass or time budget, then triage what remains. Completion means meeting the acceptance criteria and required checks, not persuading a probabilistic reviewer to stop having ideas.
 
-## The Experiment: Can the Reviewer Carry the Fix?
+## A Small Experiment
 
-**Yes, in this constructed case.** The reviewer delivered a correction and regression tests. A separate report-then-implement workflow reached the same result: both final patches passed all twelve frozen evaluator checks. That demonstrates feasibility, not human time savings.
+I tested the idea on a constructed report-export worker. One workflow had a reviewer produce a gated report for a fresh implementation agent; another had the reviewer carry the same findings through to a correction and regression tests.
 
-### The Setup
+Both final submissions passed all twelve frozen evaluator checks. The contribution-first reviewer found no extra bugs, and the separate hand-off worked. The difference was simply what arrived at review delivery: instructions for a fix, or the fix and its tests already attached.
 
-I used the report-export worker above to compare two workflows:
+That shows a reviewing agent can carry a supported finding through to a tested correction. It does **not** show lower human effort, better context retention, lower cost or greater capacity: no human caretaker, hosted patch-in PR or production pipeline participated, and the agent budgets were unequal.
 
-- **Gated report, then a fresh implementer:** one agent reviews the original snapshot and writes a report with reproductions. A fresh agent receives that complete report, the original code and the contract, then implements the reported fixes and tests them.
-- **FORGE in one review context:** an independent agent receives the same original code and contract, reproduces its findings, then carries them through to a tested patch in its review context.
-
-Before starting the agents in separate contexts, I froze the contract, their instructions and twelve additional evaluator tests. The existing three smoke tests all passed. The broken implementation passed only six of the twelve additional checks. Several of those failing checks exercise the same underlying defect at different boundaries; they are not six independent bugs.
-
-An automatically orchestrated version of the first workflow could also satisfy FORGE. These are two agent arrangements, not competing definitions of review.
-
-Both workflows get one pass with local test-and-edit iterations. Neither can read the other's output. The fresh implementer receives the full report, not the reviewer's conversation.
-
-The evaluator is outside the directories the agents are told to inspect. This is instruction-based withholding in a shared filesystem, not enforced sandbox isolation. I designed the fixture and evaluator with AI assistance; this is a constructed task, not production code or a historical PR. The outputs are local submissions, not hosted patch-in PRs. No human caretaker participated.
-
-### What Actually Happened
-
-Both reviewers independently reported the three cancellation-boundary defects and a fourth issue: the retry helper replaced null or undefined rejection values with a property-access `TypeError`. Their own deterministic tests reproduced that extra claim. It was not covered by the twelve frozen evaluator tests, so it does not add points to that score.
-
-The comment reviewer delivered four findings and their reproduction instructions, without changing the production files. The fresh implementation agent then made the coordinated correction and added tests. The FORGE reviewer delivered its four findings with the correction and regression tests already attached.
-
-On Node.js 26.8.2, the unmodified archived submissions produced:
-
-<div class="table-scroll" role="region" aria-label="Constructed JavaScript benchmark results" tabindex="0">
-
-| Observed output | Gated report, then fresh implementer | Same-context FORGE |
-| --- | --- | --- |
-| Findings in the review report | 4 | 4 |
-| Production patch at review delivery | No; report and reproduction evidence | Yes; three modules plus tests |
-| Production modules changed in final submission | 3 | 3 |
-| Final participant suite, including original tests | 15 passed, 0 failed | 24 passed, 0 failed |
-| Frozen evaluator on final submission | 12 passed, 0 failed | 12 passed, 0 failed |
-| Agent contexts used | 2 | 1 |
-| Implementation hand-offs between agent contexts | 1 | 0 |
-
-</div>
-
-I made no corrections to either submission after seeing its score.
-
-The different participant test totals are not a coverage ranking. Agents can split the same scenario into several tests or combine several assertions into one. The frozen evaluator is the common comparison, and even that only checks the specified behaviours.
-
-### What the Result Means
-
-The useful difference was what arrived at review delivery: reproduced findings and instructions, or those findings with a correction and regression tests. FORGE did not find more bugs. The separate implementer's successful hand-off is not evidence against comments.
-
-Context and hand-off counts describe the setup, not human effort. This single task had unequal aggregate agent budgets. It cannot rank review systems or establish better context retention, lower costs or increased human capacity. I did not measure human time, inference cost, hosted CI, merge time or repeated review churn.
-
-The fixture also shows why "tests pass" is incomplete evidence: all three smoke tests passed while half the additional contract checks failed. Agent-authored tests expose the proposed reasoning; the frozen evaluator supplies a common comparison. Neither guarantees correctness.
-
-You can inspect the [raw reports, evaluator output and input fingerprints](https://github.com/shaneharrigan/forge-review-benchmark/blob/main/results/worker.json), the [frozen protocol and archived submissions](https://github.com/shaneharrigan/forge-review-benchmark/tree/main/benchmarks/worker), and the [complete FORGE patch](https://raw.githubusercontent.com/shaneharrigan/forge-review-benchmark/main/results/forge.patch). From the standalone repository, re-evaluate those exact submissions with:
-
-```sh
-npm run benchmark:worker
-npm test
-```
-
-<details>
-<summary>The earlier scripted replay: separating filtering from patch delivery</summary>
-
-### A Local Replay: Separate the Gate from the Fix
-
-Before the agent comparison, I ran a **scripted local replay** on 25 October 2026 using the retry helper above. The fixture, candidate comments and patches were constructed with AI assistance for this article. They were not collected from independent AI reviews.
-
-It tests workflow mechanics, not independent reviewer behaviour or real-PR delivery speed.
-
-The input is six candidates over three scripted rounds:
-
-1. The genuine cancellation-during-wait defect.
-2. A false claim that an already-cancelled operation can start.
-3. A false claim that the second failure is swallowed.
-4. An out-of-scope request for a retry strategy class.
-5. The original cancellation finding repeated after its fix.
-6. A question about whether cancellation should interrupt an in-flight operation.
-
-Round one uses the broken helper. Rounds two and three use the same scripted repair in every condition. This keeps the code comparable, but skips the effort and delay of somebody actually implementing a comment.
-
-I replayed that input through three policies:
-
-- **Ungated comments:** forward every candidate without validation. This is a deliberately naive reference, not a claim about a particular product.
-- **Gated comments:** remember finding IDs, defer the out-of-scope preference, preserve the intent question and require a failing reproducer before reporting a defect.
-- **FORGE:** use the same gates, then apply the proposed repair and run all four contract checks before delivering the local repair bundle.
-
-The gated control separates patch delivery from basic review discipline.
-
-<div class="table-scroll" role="region" aria-label="Controlled review replay results" tabindex="0">
-
-| Measured output | Ungated comments | Gated comments | FORGE |
-| --- | --- | --- | --- |
-| Input candidates | 6 | 6 | 6 |
-| Caretaker-facing items | 6 | 2 | 2 |
-| Defect reports with reproduction evidence | 0 | 1 | 1 |
-| Intent questions delivered | 1 | 1 | 1 |
-| Focused reproduction checks run | 0 | 3 | 3 |
-| Post-patch contract checks run | 0 | 0 | 4 |
-| Validated local repair bundles delivered | 0 | 0 | 1 |
-
-</div>
-
-"Caretaker-facing items" includes the legitimate intent question. It counts delivered items, not time or necessarily blocking demands.
-
-Both gated policies withheld the two false claims, suppressed the repeated finding and deferred the preference. Both still delivered the real issue and the question a human needs to answer. FORGE additionally delivered the correction with one failing-before reproducer and four passing-after checks. Here, a "bundle" is a local source-and-test-evidence record, not an actual hosted PR.
-
-The distinction is useful: **gating reduced the queue in this replay; contributing a tested fix changed what arrived in the queue.** FORGE did not filter more findings than gated comments. It did more of the work before handing over the remaining defect.
-
-### What These Numbers Cannot Tell Us
-
-The candidates were chosen to exercise the gates. Their proportions are not an estimate of how often AI reviews are wrong. The tests encode the stated contract, and the duplicate has an exact matching ID; real agents can misunderstand contracts, write inadequate tests and phrase duplicate findings differently. The script also does not model a regression or new evidence that should reopen a finding.
-
-A passing reproducer does not generally disprove a concern. In this fixture, the two selected tests directly exercise the precise false claims. Outside it, an unsuccessful reproduction may mean the test or environment is incomplete. That uncertainty belongs in the report.
-
-There are no independent AI runs, human participants, real pipelines or merge-time observations here. The script stops after three rounds because I told it to. FORGE produces a bundle because that is what its policy asks for. Neither observation is a discovery about the world.
-
-You can inspect the [raw results](https://github.com/shaneharrigan/forge-review-benchmark/blob/main/results/replay.json) and the [fixture, candidate stream, runner and checks](https://github.com/shaneharrigan/forge-review-benchmark/tree/main/benchmarks/replay). From the standalone repository root, regenerate the data and verify it with:
-
-```sh
-npm run benchmark:replay
-npm test
-```
-
-The replay makes filtering and patch delivery inspectable. It establishes neither a speed-up nor a real-world false-positive reduction rate.
-
-</details>
+The [benchmark repository](https://github.com/shaneharrigan/forge-review-benchmark) contains the protocol, archived submissions, evaluator and raw results.
 
 ## How I Would Measure Caretaker Effort
 
@@ -589,9 +398,9 @@ I would compare active minutes on real PRs, track other contributors' effort and
 
 ### A Small Pilot on Real PRs
 
-With consenting maintainers, I would compare gated comments plus the team's normal implementation hand-off against FORGE on different, comparable PRs. Allocate the workflow before seeing its output, randomise within each maintainer's eligible work and balance the order. Do not ask someone to review the same change twice; familiarity would become another explanation for the difference.
+With consenting maintainers, I would compare gated comments plus the team's normal implementation hand-off against contribution-first review on different, comparable PRs. Allocate the workflow before seeing its output, randomise within each maintainer's eligible work and balance the order. Do not ask someone to review the same change twice; familiarity would become another explanation for the difference.
 
-Record what the normal workflow already automates. If it already delivers tested proposals without manual dispatch, do not credit FORGE with introducing that benefit; that team may already meet the agreement under another name.
+Record what the normal workflow already automates. If it already delivers tested proposals without manual dispatch, do not credit the new workflow with introducing that benefit.
 
 Keep the acceptance criteria, agent capabilities, review budget and stopping rules comparable. Log the manual `@`-mentions, tickets and other intervention each workflow actually needs. The primary measure would be **caretaker active minutes**, broken down into understanding findings, routing work, implementing or correcting fixes, running checks and inspecting proposals.
 
@@ -610,9 +419,9 @@ Use the same neutral questions in both workflows, with separate 1-7 ratings:
 - How confident are you in your decision to accept, revise or reject the proposed change? From not confident to very confident.
 - What, if anything, made the work easier or harder? A free-text answer.
 
-Allow skipped or not-applicable answers. These would be study-specific questions, not a validated workload score; I would keep the ratings separate rather than average them into a suspiciously precise "FORGE score."
+Allow skipped or not-applicable answers. These would be study-specific questions, not a validated workload score; I would keep the ratings separate rather than average them into a suspiciously precise productivity score.
 
-A broader public survey could help find participants and discover recurring frustrations. It would describe the people who chose to answer, not establish how much effort FORGE saves.
+A broader public survey could help find participants and discover recurring frustrations. It would describe the people who chose to answer, not establish how much effort the workflow saves.
 
 ### What Would Count as a Useful Gain?
 
@@ -620,7 +429,7 @@ Before collecting outcome data, agree what reduction would be worthwhile and wha
 
 I would look for lower caretaker active time without simply shifting it to reviewers or weakening the agreed quality checks. Use an independent quality assessment where practical, and a fixed follow-up window for regressions and rework. Report differences within maintainers with uncertainty; twenty comments from one person are not twenty independent participants.
 
-Keep participation voluntary, avoid collecting private source or comment text unnecessarily, and publish only consented, de-identified aggregates. Include failures, withdrawals and cases where FORGE adds work.
+Keep participation voluntary, avoid collecting private source or comment text unnecessarily, and publish only consented, de-identified aggregates. Include failures, withdrawals and cases where the workflow adds work.
 
 **A survey measures experience. Active time, quality checks and follow-up test whether reduced coordination creates a net gain without moving the cost elsewhere.**
 
@@ -628,9 +437,67 @@ Keep participation voluntary, avoid collecting private source or comment text un
 
 This is a proposed study, not one I have run.
 
-## FORGE Prompts to Borrow
+## The Same Boundary Applies Across the SDLC
 
-Borrow a whole template or cherry-pick pieces. Each explains FORGE so it can travel without this article. Preserve the scope, evidence requirements, execution limits and human approval boundary.
+This proposal changes one hand-off, not the whole software development life cycle. The same boundary still applies elsewhere: agents can produce artefacts, while people remain accountable for accepting them.
+
+<div class="table-scroll" role="region" aria-label="AI contributions and human responsibilities across the SDLC" tabindex="0">
+
+| Activity | What agents can contribute | What people remain answerable for |
+| --- | --- | --- |
+| Requirements and design | Explore options, expose ambiguities and draft acceptance examples. | Agree the intended outcome, constraints and trade-offs. |
+| Implementation | Produce code, tests, documentation and bounded corrections. | Check alignment with the requirement and existing contracts. |
+| Review and testing | Reproduce findings, propose repairs and run permitted checks. | Challenge assumptions, judge evidence and identify missing coverage. |
+| Release and operation | Prepare release material, investigate failures and propose follow-up fixes. | Set rollout, monitoring and rollback policy and authorise production changes. |
+
+</div>
+
+These responsibilities overlap. This is not a replacement organisation chart; the optional framework below addresses only the review hand-off.
+
+## Optional Machinery: FORGE
+
+The argument does not require a framework. For teams that want to encode it in review scripts and agent workflows, **FORGE** means **Frame, Observe, Repair, Gate, Explain**.[^forge]
+
+<details>
+<summary>Explore the optional FORGE agreement</summary>
+
+FORGE is a collaboration agreement for turning supported findings into tested proposals, not a product. Software has enough five-step ceremonies already; this one needs to earn its keep.
+
+A **FORGE contribution** is simply an evidence-backed proposal: the finding, bounded correction, regression tests, exact reviewed and tested revisions, and validation results and limits. The patch-in PR carries the code, not the whole agreement.
+
+```mermaid
+flowchart TD
+    accTitle: The FORGE collaboration agreement
+    accDescr: Frame the requirement, observe the defect, repair it, gate the checks and explain the contribution. Unclear intent becomes a question, unsupported findings are withdrawn or qualified, and failed or unavailable checks keep the proposal draft. The caretaker and required approvers make the acceptance decision.
+    F["Frame: requirement and scope"] --> Q{"Clear, actionable defect?"}
+    Q -->|"Needs a decision"| D["Ask a focused intent question"]
+    Q -->|"Yes"| O["Observe: attempt reproduction"]
+    O --> C{"Evidence supports the claim?"}
+    C -->|"No"| N["Withdraw or explain uncertainty"]
+    C -->|"Yes"| R["Repair: isolated patch and regression test"]
+    R --> G["Gate: before-and-after evidence and checks"]
+    G --> V{"Required checks pass?"}
+    V -->|"No or unavailable"| B["Keep draft; disclose failed or missing checks"]
+    V -->|"Yes"| E["Explain: finding, patch, tests and limitations"]
+    E --> H["Caretaker and required approvers decide"]
+```
+
+The exits matter: unclear intent calls for a question, evidence can overturn a finding, and failed or unavailable checks keep a proposal draft.
+
+### Better Hygiene, Not Less Care
+
+Adoption means updating review scripts **and** configuring context, a test environment, permissions and gates. Require inspectable results tied to exact revisions, including blocked checks; "the AI said so" is not evidence. This is a delivery contract, not a more enthusiastic prompt.
+
+</details>
+
+### Prompt Templates to Borrow
+
+These templates are optional implementation material. Each explains FORGE so it can travel without the article.
+
+<details>
+<summary>Open the FORGE prompt templates</summary>
+
+Borrow a whole template or cherry-pick pieces. Preserve the scope, evidence requirements, execution limits and human approval boundary.
 
 Choose [full contribution](#full-contribution), [evidence and hand-off](#evidence-and-hand-off), or [focused re-review](#focused-re-review). **Copy** takes the whole block; select text for individual pieces. Replace the bracketed fields.
 
@@ -644,25 +511,24 @@ Use this as shared policy. Fill in the scope, execution policy and budget, and e
 
 ```text
 FORGE agreement
-FORGE means Frame, Observe, Repair, Gate, Explain.
-It is a collaboration agreement for delivering evidence-backed corrections:
-the finding, bounded fix, regression tests and validation evidence travel together.
+FORGE = Frame, Observe, Repair, Gate, Explain.
+Deliver supported findings as proposals containing the claim, bounded fix,
+regression tests, exact tested revisions, and validation results and limits.
 
 Scope: [requirement, reviewed commit, allowed changes]
 Execution: [trusted environment, permitted commands, required checks]
 Budget: [time/pass limit and escalation route]
 
-Frame: classify each finding as a defect, question or preference.
-Observe: reproduce defects on the reviewed commit and record the evidence.
-Repair: propose bounded fixes and regression tests in a patch-in PR.
-Gate: record expected failure before, results after, and repository checks.
-Explain: link the finding, patch, tested revisions, commands, results and limits.
+Frame: classify defects, questions and preferences.
+Observe: reproduce defects on the reviewed commit.
+Repair: prepare a bounded fix and regression test in a patch-in PR.
+Gate: record the failure before, results after and required checks.
+Explain: link the proposal, commands, evidence and limitations.
 
-Unclear intent: ask. Unsupported claim: explain uncertainty or withdraw with evidence.
-Failed or unavailable required check: keep draft and disclose the failure.
-Never push directly to the reviewed branch or bypass approval.
-Carry decisions forward; reopening a rejected finding requires new evidence.
-Update and retest stale proposals. At the budget limit, stop for human triage.
+Ask when intent is unclear. Qualify or withdraw unsupported claims.
+Keep proposals draft when required checks fail or cannot run.
+Do not push to the reviewed branch or bypass approval.
+Carry decisions forward, retest stale proposals and stop at the budget limit.
 ```
 
 ### Full Contribution
@@ -676,29 +542,23 @@ with a task that asks for the contribution itself:
 ```text
 Review [base..head] against [requirement].
 Use [allowed scope, execution policy, required checks and time/pass budget].
-The branch under review is [reviewed branch].
+Target patch-in PRs at [reviewed branch], not main.
 
-FORGE means Frame, Observe, Repair, Gate, Explain.
-It is a collaboration agreement: carry a supported review finding through
-to an evidence-backed change proposal, not another implementation request.
-The contribution contains the finding, bounded fix, regression tests and
-validation evidence. The PR caretaker coordinates the change; they should
-not have to commission the fix, and human approval remains separate.
+FORGE = Frame, Observe, Repair, Gate, Explain.
+For each supported defect, deliver the claim, bounded fix, regression tests,
+exact tested revisions, and validation results and limits.
 
-Frame: establish the requirement, reviewed commit, assumptions and scope.
-Observe: reproduce the defect on that commit and record the evidence.
-Repair: prepare a bounded correction and regression tests on a separate branch.
-        Propose a patch-in PR targeting [reviewed branch], not main.
-Gate: record the expected failure before, results after, required checks,
-      commands and exact tested revisions.
-Explain: deliver the finding, patch link, tests, outcomes and limitations.
+Frame the requirement, assumptions and scope.
+Observe the defect on the reviewed commit.
+Repair it on a separate branch with regression coverage.
+Gate it with failure-before, success-after and required-check evidence.
+Explain the finding, patch link, commands, results and limitations.
 
-Questions remain questions. Label preferences as non-blocking.
-If a claim is unsupported, explain the uncertainty or withdraw with evidence.
-If required validation or permissions block progress, disclose it and keep draft.
-Do not push directly to the reviewed branch or merge your own proposal.
-Carry review decisions forward; reopening a rejection requires new evidence.
-Update and retest stale proposals. At the budget limit, stop for human triage.
+Ask about unclear intent. Keep preferences non-blocking.
+Qualify or withdraw unsupported claims.
+Keep blocked or incomplete proposals draft and disclose why.
+Do not push to the reviewed branch or merge your own proposal.
+Carry decisions forward, retest stale proposals and stop at the budget limit.
 ```
 
 ### Evidence and Hand-Off
@@ -708,20 +568,18 @@ For a review surface that can only comment, preserve the evidence for a configur
 ```text
 Produce a FORGE hand-off for [reviewed commit] and [requirement].
 
-FORGE means Frame, Observe, Repair, Gate, Explain.
-It is a collaboration agreement for carrying supported findings through
-to bounded corrections, regression tests and validation evidence.
-Your role is to frame and investigate findings within your available tools,
-then preserve context for the configured implementation and validation route.
-A hand-off packet is not itself the completed FORGE contribution.
+FORGE = Frame, Observe, Repair, Gate, Explain.
+Investigate findings with the available tools, then preserve enough context
+for the configured implementation route to fix, test and explain them.
 
 For each candidate include:
-- the requirement, location, claim and bounded repair scope;
-- reproduction evidence, or an explicit "not executed";
-- remaining questions and the checks implementation must run.
+- requirement, location, claim and bounded repair scope;
+- reproduction evidence, or "not executed";
+- open questions and required checks.
 
-Use the configured implementation route if this surface exposes it.
-Otherwise report the capability block; do not invent a patch or test run.
+Invoke the configured implementation route when available.
+Otherwise state the capability block; do not invent a patch or test result.
+A hand-off is not a completed FORGE contribution.
 ```
 
 The operator must wire that route to a suitably permitted agent without making the caretaker relay it. Without the route, this produces a report, not a completed FORGE contribution.
@@ -735,35 +593,29 @@ Re-review [previous reviewed commit..new reviewed commit] against [requirement].
 Use [finding ledger], [reviewed branch] and [remaining time/pass budget].
 Respect [allowed scope, execution policy and required checks].
 
-FORGE means Frame, Observe, Repair, Gate, Explain.
-It is a collaboration agreement for delivering bounded corrections,
-regression tests and validation evidence, not just more comments.
-This is a follow-up pass, not a fresh review of the entire design.
+FORGE = Frame, Observe, Repair, Gate, Explain.
+This is a focused follow-up, not a fresh review of the entire design.
 
-Frame: carry forward fixed, rejected, deferred and unresolved findings.
-Observe: verify claimed repairs and inspect changed paths and their consequences.
-Repair: carry any supported, in-scope regression through to a patch-in PR
-        targeting [reviewed branch], with regression tests.
-Gate: record reproduction evidence, before/after results and required checks
-      against exact revisions. Keep incomplete validation draft and visible.
-Explain: update the ledger with evidence and the remaining human decisions.
+Frame: carry forward fixed, rejected, deferred and open findings.
+Observe: verify repairs and inspect the changed paths and consequences.
+Repair: put supported regressions and tests in a patch-in PR targeting
+        [reviewed branch].
+Gate: record before/after evidence and required checks against exact revisions.
+Explain: update the ledger, limitations and remaining decisions.
 
-Do not reopen a rejected finding without new evidence.
-Explain why any newly discovered defect blocks this change.
-Keep preferences non-blocking and ask about unresolved intent.
-Do not push directly to the reviewed branch or merge your own proposal.
-At the budget limit, stop for human triage instead of starting another full pass.
+Reopen rejected findings only with new evidence.
+Keep incomplete validation draft, preferences non-blocking and intent as questions.
+Do not push to the reviewed branch or merge your own proposal.
+Stop at the budget limit instead of starting another full pass.
 ```
 
 The deliverable matters more than the name. Match the task to the capabilities, then make the workflow carry it through.
 
+</details>
+
 ## Less Homework, More Contribution
 
-Scaling comments is not the same as scaling review. Every finding asks for attention, even when the answer is "this cannot happen." Ten more comments do not create ten more caretakers.
-
-I want reviewing AI to help finish the work, not just find more of it. Sometimes that means asking a question or withdrawing a concern. For a supported defect within its capabilities, it means contributing the correction, tests and evidence.
-
-FORGE makes contribution shared without making accountability disappear. Operators answer for their automation; the caretaker and approvers answer for acceptance.
+Scaling comments is not the same as scaling review. Every finding asks for attention, even when the answer is "this cannot happen." For a supported defect within its capabilities, reviewing AI should contribute the correction, tests and evidence. Sometimes the right contribution is a question or a withdrawn concern.
 
 The scarce resource is human judgement, not another first draft. The caretaker should receive something they can evaluate, not automatically inherit the job of making it reviewable.
 

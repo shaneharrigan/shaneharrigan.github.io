@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" role="img" aria-labelledby="title">
+	<title id="title">The missing-page search party</title>
+	<ellipse cx="342" cy="233" rx="218" ry="10" fill="#e5e9f0" />
+	<g stroke="#222939" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M198 202v23h-16M233 202v23h16" fill="none" />
+		<rect x="174" y="140" width="82" height="65" rx="12" fill="#f1f3ff" />
+		<path d="M215 80V60" fill="none" />
+		<circle cx="215" cy="54" r="6" fill="#2337ff" stroke="#2337ff" />
+		<rect x="162" y="80" width="106" height="68" rx="15" fill="#fff" />
+		<path d="m184 96 15-3m34 0 15 5" fill="none" />
+		<circle cx="192" cy="110" r="4" fill="#222939" />
+		<circle cx="240" cy="110" r="4" fill="#222939" />
+		<path d="M204 131q12-8 24 0" fill="none" />
+		<path d="M174 162q-26 0-27 23m109-23q27 3 55-9" fill="none" />
+		<circle cx="147" cy="190" r="6" fill="#fff" />
+		<circle cx="316" cy="151" r="6" fill="#fff" />
+		<path d="m320 158 16-20" fill="none" stroke-width="7" />
+		<circle cx="350" cy="118" r="27" fill="#f1f3ff" fill-opacity=".7" stroke="#2337ff" />
+		<path d="m338 105 9-5" fill="none" stroke="#fff" stroke-width="5" />
+		<circle cx="215" cy="170" r="5" fill="#2337ff" stroke="none" />
+		<path d="M202 187h26" fill="none" stroke="#60739f" />
+		<path d="m377 157 65-24 81 25-68 28Z" fill="#fff" />
+		<path d="m377 157 78 29v46l-78-28Z" fill="#e5e9f0" />
+		<path d="m455 186 68-28v46l-68 28Z" fill="#f1f3ff" />
+		<path d="m377 157-28-27 66-23 27 26m0 0 37-21 74 24-30 22" fill="#fff" />
+	</g>
+	<g fill="#60739f" font-family="sans-serif" text-anchor="middle">
+		<text x="295" y="72" font-size="28" font-weight="700">?</text>
+		<text x="414" y="195" font-size="14" font-weight="700" transform="rotate(20 414 195)">PAGE</text>
+	</g>
+</svg>

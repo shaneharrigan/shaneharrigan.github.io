@@ -1,0 +1,100 @@
+---
+import { Image } from 'astro:assets';
+import charitySupport from '../assets/charity-support.svg';
+---
+
+<aside class="charity-support" aria-labelledby="charity-support-title">
+	<Image class="charity-illustration" src={charitySupport} alt="" />
+	<h2 id="charity-support-title">Support LauraLynn</h2>
+	<p>
+		Help <strong>LauraLynn, Ireland's Children's Hospice</strong> support children with palliative
+		care needs and their families.
+	</p>
+	<a class="donation-link" href="https://www.lauralynn.ie/donate">
+		<svg
+			width="22"
+			height="22"
+			viewBox="0 0 24 24"
+			fill="none"
+			aria-hidden="true"
+			focusable="false"
+		>
+			<path
+				d="M12 21S3 15.5 3 8.5a4.5 4.5 0 0 1 9-1 4.5 4.5 0 0 1 9 1C21 15.5 12 21 12 21Z"
+				stroke="currentColor"
+				stroke-width="1.8"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+		</svg>
+		Donate to LauraLynn
+	</a>
+	<p class="charity-note">Entirely optional. Donations are made on LauraLynn's official website.</p>
+</aside>
+
+<style>
+	.charity-support {
+		box-sizing: border-box;
+		width: 32rem;
+		max-width: calc(100% - 2rem);
+		margin: 0 auto;
+		padding: 2.5rem 1rem 1rem;
+		color: rgb(var(--gray-dark));
+		text-align: center;
+	}
+
+	.charity-illustration {
+		display: block;
+		width: 96px;
+		height: auto;
+		margin: 0 auto 1rem;
+	}
+
+	h2 {
+		margin-bottom: 0.75rem;
+		font-size: clamp(1.5rem, 4vw, 1.8rem);
+	}
+
+	p {
+		margin: 0;
+	}
+
+	.donation-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		gap: 0.65rem;
+		max-width: 100%;
+		min-height: 48px;
+		margin-top: 1.5rem;
+		padding: 0.75rem 1.5rem;
+		border: 1px solid var(--accent);
+		border-radius: 4px;
+		background: var(--accent);
+		color: white;
+		font-size: 1rem;
+		font-weight: 700;
+		text-decoration: none;
+	}
+
+	.donation-link svg {
+		flex-shrink: 0;
+	}
+
+	.donation-link:hover {
+		border-color: var(--accent-dark);
+		background: var(--accent-dark);
+		color: white;
+	}
+
+	.donation-link:focus-visible {
+		outline: 3px solid var(--accent-dark);
+		outline-offset: 4px;
+	}
+
+	.charity-note {
+		margin-top: 1rem;
+		font-size: 0.9rem;
+	}
+</style>
